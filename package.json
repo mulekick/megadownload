@@ -1,0 +1,16 @@
+{
+  "name": "grab-media",
+  "version": "1.0.0",
+  "description": "grab online media from urls and save to disk, work in progress",
+  "dependencies": {
+    "fetch": "^1.1.0",
+    "fluent-ffmpeg": "^2.1.2",
+    "mime-types": "^2.1.32"
+  },
+  "engines": {
+    "node": ">= 12.18.2",
+    "npm": ">= 6.14.8"
+  },
+  "author": "mulekick",
+  "license": "ISC"
+}
