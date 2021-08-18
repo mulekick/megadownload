@@ -37,8 +37,8 @@ const
                             res = {
                                 // url to feed ffmpeg
                                 source: finalUrl,
-                                // resource type
-                                type: mime.extension(responseHeaders[`content-type`]),
+                                // resource type (odoklassniki band-aid lol)
+                                type: /.+x-mpegurl.+$/ui.test(responseHeaders[`content-type`]) ? `m3u8` : mime.extension(responseHeaders[`content-type`]),
                                 // resource size
                                 size: responseHeaders[`content-length`],
                                 // encoding
@@ -199,6 +199,7 @@ const
             // output message to stdout
             process.stdout.write(`\n---------------------------------`);
             process.stderr.write(`\nerror occured: ${ err.message }`);
+            process.stdout.write(`\n`);
             // return error code
             process.exit(1);
         } finally {

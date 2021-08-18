@@ -1,2 +1,6 @@
 # exclude node_modules directory
 /node_modules/*
+# exclude list file
+/list
+# exclude logs
+/*.log
