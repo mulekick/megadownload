@@ -4,3 +4,5 @@
 /list
 # exclude logs
 /*.log
+# exclude infos
+/*.info

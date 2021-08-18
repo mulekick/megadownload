@@ -38,7 +38,7 @@ const
                                 // url to feed ffmpeg
                                 source: finalUrl,
                                 // resource type (odoklassniki band-aid lol)
-                                type: /.+x-mpegurl.+$/ui.test(responseHeaders[`content-type`]) ? `m3u8` : mime.extension(responseHeaders[`content-type`]),
+                                type: /.*x-mpegurl.*$/ui.test(responseHeaders[`content-type`]) ? `m3u8` : mime.extension(responseHeaders[`content-type`]),
                                 // resource size
                                 size: responseHeaders[`content-length`],
                                 // encoding
