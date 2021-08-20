@@ -9,7 +9,7 @@ let
 const
     // ---------------------------------------------------------------------------------
     // input line validation regex
-    filergx = /^(?<url>(?:ftp|http|https):\/\/(?:[a-zA-Z0-9-]+\.)+[a-zA-Z0-9-]+(?::\d+)?\/[^ "]+)\s(?<title>.+)$/u,
+    filergx = /^(?<url>(?:ftp|http|https):\/\/(?:[a-zA-Z0-9-]+\.)+[a-zA-Z0-9-]+(?::\d+)?\/[^ "]+)\s(?<format>\w{3,4})\s(?<title>.+)$/u,
     // ---------------------------------------------------------------------------------
     // download + logs directory
     [ downloaddir, logsdir ] = process.argv.slice(2),
@@ -18,7 +18,7 @@ const
     {FetchStream} = require(`fetch`),
     mime = require(`mime-types`),
     // ---------------------------------------------------------------------------------
-    fetchHeaders = (url, title) =>
+    fetchHeaders = (url, format, title) =>
         new Promise((resolve, reject) => {
             const
                 // http readable options
@@ -37,14 +37,16 @@ const
                             res = {
                                 // url to feed ffmpeg
                                 source: finalUrl,
-                                // resource type (odoklassniki band-aid lol)
-                                type: /.*x-mpegurl.*$/ui.test(responseHeaders[`content-type`]) ? `m3u8` : mime.extension(responseHeaders[`content-type`]),
+                                // resource type (odoklassniki/soundcloud band-aid lol)
+                                type: /.*(?:x-mpegurl|audio\/mpegurl).*$/ui.test(responseHeaders[`content-type`]) ? `m3u8` : mime.extension(responseHeaders[`content-type`]),
                                 // resource size
                                 size: responseHeaders[`content-length`],
                                 // encoding
                                 encoding: responseHeaders[`content-encoding`],
                                 // path to file
                                 target: `${ downloaddir }/${ title }`,
+                                // output format
+                                format: format,
                                 // path to log file
                                 logfile: `${ logsdir }/${ title }.log`
                             };
@@ -72,24 +74,25 @@ const
         new Promise((resolve, reject) => {
             const
                 // extract source, target, type and log
-                {source, target, type, logfile} = v,
+                {source, type, target, format, logfile} = v,
                 // init output options
                 outputOpts = [];
-            let
-                // init output format
-                outputFormat = null;
             // select options depending on source type
-            switch (type) {
+            switch (true) {
             // m3u8 playlist --> mp4 file
-            case `m3u8` :
+            case type === `m3u8` && format === `mp4` :
                 // audio: aac_adtstoasc, video: copy
                 outputOpts.push(`-bsf:a aac_adtstoasc`, `-c copy`);
-                outputFormat = `mp4`;
                 break;
-            case `mp4` :
+            // mp4 stream --> mp4 file
+            case type === `mp4` && format === `mp4`  :
                 // audio: copy, video: copy
                 outputOpts.push(`-c copy`);
-                outputFormat = `mp4`;
+                break;
+            // mp4, mp3, m3u8 stream --> mp3 file
+            case [ `mp4`, `mp3`, `m3u8` ].includes(type) && format === `mp3`  :
+                // force output bitrate to 320 kbits
+                outputOpts.push(`-b:a 320000`);
                 break;
             default :
                 // reject
@@ -98,7 +101,7 @@ const
             }
             const
                 // target full path
-                file = `${ target }.${ outputFormat }`,
+                file = `${ target }.${ format }`,
                 // file system writable options
                 wsopts = {
                     // write fails if path exists
@@ -118,9 +121,11 @@ const
 
             const
                 // create ffmpeg command
+                // mp4 format needs a 'seekable' target, so we can't pipe to a writable and have to use ffmpeg's builtins
+                // output format is mandatory for the wrapper, can't set it through the options
                 ffcmd = ffmpeg()
                     .input(source)
-                    .outputFormat(outputFormat)
+                    .outputFormat(format)
                     .outputOptions(outputOpts)
                     .output(file);
 
@@ -160,13 +165,13 @@ const
                     throw new TypeError(`invalid fetching request: ${ requests[counter] }`);
                 const
                     // extract url and title
-                    [ url, title ] = match.slice(1);
+                    [ url, format, title ] = match.slice(1);
                 // output message to stdout
                 process.stdout.write(`\n---------------------------------`);
-                process.stdout.write(`\nfetching ${ title }`);
+                process.stdout.write(`\nfetching ${ title }.${ format }`);
                 process.stdout.write(`\nfrom ${ url }`);
                 // start async function immediately
-                promisesArray.push(fetchHeaders(url, title));
+                promisesArray.push(fetchHeaders(url, format, title));
             }
 
             let
