@@ -2,10 +2,14 @@
   "name": "grab-media",
   "version": "1.0.0",
   "description": "grab online media from urls and save to disk, work in progress",
+  "scripts": {
+    "grab": "node src/grab-media.js"
+  },
   "dependencies": {
     "fetch": "^1.1.0",
     "fluent-ffmpeg": "^2.1.2",
-    "mime-types": "^2.1.32"
+    "mime-types": "^2.1.32",
+    "unique-names-generator": "^4.6.0"
   },
   "engines": {
     "node": ">= 12.18.2",

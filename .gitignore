@@ -2,7 +2,5 @@
 /node_modules/*
 # exclude logs
 /logs/*
-# exclude list file
-/list
-# exclude infos
-/*.info
+# exclude debug files
+/.vscode/*
