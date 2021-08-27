@@ -16,7 +16,7 @@ const
     {fetchMedia} = require(`./fetch-media`),
     // ---------------------------------------------------------------------------------
     // Config module
-    {MIN_MEDIA_DURATION, MIN_NB_OF_STREAMS, STREAM_FORMATS, DOWNLOAD_DIR, LOG_FILE, ISOLATION_RGX} = require(`./config`),
+    {MIN_MEDIA_DURATION, MIN_NB_OF_STREAMS, STREAM_FORMATS, DOWNLOAD_DIR, LOG_FILE, ISOLATION_RGX, HOST_RGX} = require(`./config`),
     // ---------------------------------------------------------------------------------
     // session file, download directory
     [ file, downloaddir = DOWNLOAD_DIR ] = process.argv.slice(2),
@@ -90,6 +90,8 @@ const
             // append attributes to media
             for (let counter = 0; counter < resultsArray.length; counter++) {
                 const
+                    // extract remote server
+                    [ host ] = resultsArray[counter][`mediaLocation`].match(HOST_RGX).slice(1),
                     // generate random name
                     fname = uniqueNamesGenerator({
                         dictionaries: [ adjectives, colors, languages, starWars ],
@@ -97,17 +99,19 @@ const
                         style: `capital`,
                         length: 4
                     }),
-                    // codecs options
-                    codecOptions = resultsArray[counter][`metadata`][`format`][`format_long_name`] === `MPEG-TS (MPEG-2 Transport Stream)` ? [ `-bsf:a aac_adtstoasc`, `-c copy` ] :
-                        resultsArray[counter][`metadata`][`format`][`format_long_name`] === `Apple HTTP Live Streaming` ? [ `-c copy` ] :
-                            resultsArray[counter][`metadata`][`format`][`format_long_name`] === `QuickTime / MOV` ? [ `-c copy` ] :
-                                [];
-                // update media
-                Object.assign(resultsArray[counter], {
                     // local file save path
-                    target: `${ downloaddir }/${ fname.replace(/[^A-Za-z0-9]/gu, ``) }.mp4`,
-                    options: codecOptions
-                });
+                    target = `${ downloaddir }/${ fname.replace(/[^A-Za-z0-9]/gu, ``) }.mp4`,
+                    // extract metadata
+                    {streams, format} = resultsArray[counter][`metadata`],
+                    // resolution
+                    {width, height, bit_rate} = streams.find(x => x[`codec_type`] === `video`),
+                    // codecs options
+                    options = format[`format_long_name`] === `MPEG-TS (MPEG-2 Transport Stream)` ? [ `-bsf:a aac_adtstoasc`, `-c copy` ] :
+                        format[`format_long_name`] === `Apple HTTP Live Streaming` ? [ `-c copy` ] :
+                            format[`format_long_name`] === `QuickTime / MOV` ? [ `-c copy` ] :
+                                [];
+                // eslint-disable-next-line object-curly-newline
+                Object.assign(resultsArray[counter], {host, target, height, width, bit_rate, options});
             }
 
             // log successful probes

@@ -95,6 +95,5 @@ const
                 })
                 .on(`error`, err => resolve({url: url, fetched: false, probed: false, errmsg: err[`message`]}));
         });
-    // ---------------------------------------------------------------------------------
 
 module.exports = {probeMedia};

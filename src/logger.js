@@ -19,26 +19,28 @@ const
     formatmsg = x => {
         const
             // extract
-            {url, target, fetched, probed, errmsg, mediaLocation, contentType, contentLength, metadata} = x;
+            // eslint-disable-next-line no-unused-vars
+            {url, target, fetched, probed, errmsg, mediaLocation, contentType, contentLength, metadata, host, height, width, bit_rate} = x;
         // eslint-disable-next-line prefer-template
-        return  `ORIG. URL : ${ url }\n` +
-                `FETCH URL : ${ mediaLocation }\n` +
+        return  `\x1b[32mFROM : ${ host }\x1b[0m\n` +
+                // `ORIG. URL : ${ url }\n` +
+                // `FETCH URL : ${ mediaLocation }\n` +
                 `FETCH TYPE : ${ contentType }\n` +
                 `FETCH SIZE : ${ contentLength }\n` +
-                `STATUS: ${ fetched ? `FETCHED` : `NOT FETCHED` }/${ probed ? `PROBED` : `NOT PROBED` }\n` +
-                `ERROR MESSAGE: ${ errmsg }\n` +
-                `---------------------------------\n` +
+                // `STATUS: ${ fetched ? `FETCHED` : `NOT FETCHED` }/${ probed ? `PROBED` : `NOT PROBED` }\n` +
+                // `ERROR MESSAGE: ${ errmsg }\n` +
                 (metadata ?
                 // eslint-disable-next-line indent
-                `PROBE TYPE : ${ x[`metadata`][`format`][`format_long_name`] }\n` +
-                `PROBE SIZE : ${ x[`metadata`][`format`][`size`] }\n` +
-                `DURATION : ${ x[`metadata`][`format`][`duration`] }\n` +
-                `NUMBER OF STREAMS : ${ x[`metadata`][`format`][`nb_streams`] }\n` +
-                `---------------------------------\n` : ``) +
+                `PROBE TYPE : ${ metadata[`format`][`format_long_name`] }\n` +
+                `PROBE SIZE : ${ metadata[`format`][`size`] }\n` +
+                // `NUMBER OF STREAMS : ${ metadata[`format`][`nb_streams`] }\n` +
+                `DURATION : ${ metadata[`format`][`duration`] }\n` : ``) +
                 (target ?
                 // eslint-disable-next-line indent
-                `SAVED AS : ${ target }\n` +
-                `---------------------------------\n` : ``);
+                `RESOLUTION : ${ width }x${ height }\n` +
+                `VIDEO BITRATE : ${ isNaN(bit_rate) ? `N/A` : bit_rate / 1000 } kbps\n` +
+                `\x1b[31mSAVED AS : ${ target }\x1b[0m\n` : ``) +
+                `---------------------------------\n`;
     };
     // ---------------------------------------------------------------------------------
 
