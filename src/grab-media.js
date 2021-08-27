@@ -16,7 +16,7 @@ const
     {fetchMedia} = require(`./fetch-media`),
     // ---------------------------------------------------------------------------------
     // Config module
-    {MIN_MEDIA_DURATION, MIN_NB_OF_STREAMS, STREAM_FORMATS, DOWNLOAD_DIR, LOG_FILE, ISOLATION_RGX, HOST_RGX} = require(`./config`),
+    {MIN_MEDIA_DURATION, MIN_NB_OF_STREAMS, STREAM_FORMATS, DOWNLOAD_DIR, LOG_FILE, ISOLATION_RGX, HOST_RGX, CODEC_OPTIONS} = require(`./config`),
     // ---------------------------------------------------------------------------------
     // session file, download directory
     [ file, downloaddir = DOWNLOAD_DIR ] = process.argv.slice(2),
@@ -106,10 +106,7 @@ const
                     // resolution
                     {width, height, bit_rate} = streams.find(x => x[`codec_type`] === `video`),
                     // codecs options
-                    options = format[`format_long_name`] === `MPEG-TS (MPEG-2 Transport Stream)` ? [ `-bsf:a aac_adtstoasc`, `-c copy` ] :
-                        format[`format_long_name`] === `Apple HTTP Live Streaming` ? [ `-c copy` ] :
-                            format[`format_long_name`] === `QuickTime / MOV` ? [ `-c copy` ] :
-                                [];
+                    options = format[`format_long_name`] in CODEC_OPTIONS ? CODEC_OPTIONS[format[`format_long_name`]] : [];
                 // eslint-disable-next-line object-curly-newline
                 Object.assign(resultsArray[counter], {host, target, height, width, bit_rate, options});
             }

@@ -50,14 +50,14 @@ const
                 }));
 
             let
-                // set probe source
+                // set fetch source
                 fetchSrc = null;
             // IMPOSSIBLE TO PIPE M3U8 FILES TO FFPROBE/FFMPEG ==> USE URL
             if (contentType === `m3u8`)
-                // probe url
+                // fetch url
                 fetchSrc = mediaLocation;
             else
-                // probe readable
+                // fetch readable
                 fetchSrc = new FetchStream(mediaLocation, rsopts);
 
             const
@@ -71,6 +71,7 @@ const
 
             // set event listeners for command
             ffcmd
+                // CLI command output
                 .on(`start`, cmd => logfile.write(`\nffmpeg spawned:\n${ cmd }`))
                 // input codec data
                 .on(`codecData`, o => logfile.write(`\ninput codec data: ${ JSON.stringify(o) }`))
@@ -78,13 +79,14 @@ const
                 .on(`stderr`, msg => logfile.write(`\n${ msg }`))
                 // transcoding done
                 .on(`end`, () => {
-                    logfile.write(`\ntranscoding succeed.`);
-                    resolve(new resolver({mediaLocation: mediaLocation, transcodeSuccessful: true, savedFile: target, logFile: logfileName}));
+                    // ensure all writes to log file are completed
+                    logfile.end(`\ntranscoding succeed.`, () => resolve(new resolver({mediaLocation: mediaLocation, transcodeSuccessful: true, savedFile: target, logFile: logfileName})));
                 })
                 // transcoding error
                 .on(`error`, err => rm(target, {force: true}, () => {
-                    logfile.write(`\ntranscoding error occured: ${ err[`message`] }`);
-                    resolve(new resolver({mediaLocation: mediaLocation, transcodeSuccessful: false, errmsg: err[`message`], logFile: logfileName}));
+                    // ensure all writes to log file are completed
+                    // eslint-disable-next-line max-nested-callbacks
+                    logfile.end(`\ntranscoding error occured: ${ err[`message`] }`, () => resolve(new resolver({mediaLocation: mediaLocation, transcodeSuccessful: false, errmsg: err[`message`], logFile: logfileName})));
                 }));
 
             // run

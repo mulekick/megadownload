@@ -20,11 +20,17 @@ const
         LOG_FILE: `logs/${ new Date().getTime() }.media.grab.log`,
 
         // host isolation
-        HOST_RGX: /^(?:ftp|http|https):\/\/(?<host>(?:[a-zA-Z0-9-]+\.)+[a-zA-Z0-9-]+)(?::\d+)?\/[^ "]+$/u,
+        HOST_RGX: /^(?:http|https):\/\/(?<host>(?:[a-zA-Z0-9-]+\.)+[a-zA-Z0-9-]+)(?::\d+)?\/[^ "]+$/u,
 
         // url isolation TO BE CONFIRMED
-        ISOLATION_RGX: /(?:http|https):\/\/(?:[a-zA-Z0-9-]+\.)+[a-zA-Z0-9-]+(?::\d+)?\/[^ '"\s]*(?:videoplayback\?|h264|mp4|m3u8|\W\d{3,4}p\W)[^ '"\s]*/gu
-        // urlrgx: /(?:http|https):\/\/(?:[a-zA-Z0-9-]+\.)+[a-zA-Z0-9-]+(?::\d+)?\/[^ '"\s]*(?:videoplayback\?|h264|mp4|m3u8|bytes=|\W\d{3,4}p\W)[^ '"\s]*/gu
+        ISOLATION_RGX: /(?:http|https):\/\/(?:[a-zA-Z0-9-]+\.)+[a-zA-Z0-9-]+(?::\d+)?\/[^ '"\s]*(?:videoplayback\?|h264|mp4|m3u8|\W\d{3,4}p\W)[^ '"\s]*/gu,
+
+        // output codecs options
+        CODEC_OPTIONS: {
+            [`MPEG-TS (MPEG-2 Transport Stream)`]: [ `-bsf:a aac_adtstoasc`, `-c copy` ],
+            [`Apple HTTP Live Streaming`]: [ `-c copy` ],
+            [`QuickTime / MOV`]: [ `-c copy` ]
+        }
 
     };
 
