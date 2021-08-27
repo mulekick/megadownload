@@ -111,6 +111,10 @@ const
                 Object.assign(resultsArray[counter], {host, target, height, width, bit_rate, options});
             }
 
+            // no successful probes, exit
+            if (resultsArray.length === 0)
+                throw new Error(`no successful probes could be performed on the selected session, exiting.`);
+
             // log successful probes
             // eslint-disable-next-line prefer-template
             eventLog = `---------------------------------\n` +
