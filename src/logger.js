@@ -15,34 +15,33 @@ const
         emitClose: true
     },
     // ---------------------------------------------------------------------------------
-    // log formatting
-    formatmsg = x => {
+    // probe formatting
+    formatProbe = x => {
         const
             // extract
             // eslint-disable-next-line no-unused-vars
-            {url, target, fetched, probed, errmsg, mediaLocation, contentType, contentLength, metadata, host, height, width, bit_rate} = x;
+            {host, audio, video, target} = x;
         // eslint-disable-next-line prefer-template
         return  `\x1b[32mFROM : ${ host }\x1b[0m\n` +
-                // `ORIG. URL : ${ url }\n` +
-                // `FETCH URL : ${ mediaLocation }\n` +
-                `FETCH TYPE : ${ contentType }\n` +
-                `FETCH SIZE : ${ contentLength }\n` +
-                // `STATUS: ${ fetched ? `FETCHED` : `NOT FETCHED` }/${ probed ? `PROBED` : `NOT PROBED` }\n` +
-                // `ERROR MESSAGE: ${ errmsg }\n` +
-                (metadata ?
-                // eslint-disable-next-line indent
-                `PROBE TYPE : ${ metadata[`format`][`format_long_name`] }\n` +
-                `PROBE SIZE : ${ metadata[`format`][`size`] }\n` +
-                // `NUMBER OF STREAMS : ${ metadata[`format`][`nb_streams`] }\n` +
-                `DURATION : ${ metadata[`format`][`duration`] }\n` : ``) +
-                (target ?
-                // eslint-disable-next-line indent
-                `RESOLUTION : ${ width }x${ height }\n` +
-                `VIDEO BITRATE : ${ isNaN(bit_rate) ? `N/A` : bit_rate / 1000 } kbps\n` +
-                `\x1b[31mSAVED AS : ${ target }\x1b[0m\n` : ``) +
+                `---------------------------------\n` +
+                `AUDIO STREAM ${ audio[`index`] }\n` +
+                `SOURCE : ${ audio[`_mediaLocation`] }\n` +
+                `TYPE : ${ audio[`codec_long_name`] }\n` +
+                `SAMPLE RATE : ${ isNaN(audio[`sample_rate`]) ? `N/A` : audio[`sample_rate`] / 1000 } kHz\n` +
+                `BIT RATE : ${ isNaN(audio[`bit_rate`]) ? `N/A` : audio[`bit_rate`] / 1000 } kbps\n` +
+                `LAYOUT : ${ audio[`channel_layout`] }\n` +
+                `DURATION : ${ audio[`duration`] }\n` +
+                `---------------------------------\n` +
+                `VIDEO STREAM ${ video[`index`] }\n` +
+                `SOURCE : ${ video[`_mediaLocation`] }\n` +
+                `TYPE : ${ video[`codec_long_name`] }\n` +
+                `RESOLUTION : ${ video[`width`] }x${ video[`height`] }\n` +
+                `BIT RATE : ${ isNaN(video[`bit_rate`]) ? `N/A` : video[`bit_rate`] / 1000 } kbps\n` +
+                `DURATION : ${ video[`duration`] }\n` +
+                `---------------------------------\n` +
+                `\x1b[31mSAVED AS : ${ target }\x1b[0m\n` +
                 `---------------------------------\n`;
     };
-    // ---------------------------------------------------------------------------------
 
 class logger {
     constructor(logfile) {
@@ -70,4 +69,4 @@ class logger {
     }
 }
 
-module.exports = {logger, formatmsg};
+module.exports = {logger, formatProbe};

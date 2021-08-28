@@ -10,7 +10,7 @@ class resolver {
 const
     // ---------------------------------------------------------------------------------
     // load modules
-    {FetchStream} = require(`fetch`),
+    {FetchStream, fetchUrl} = require(`fetch`),
     mime = require(`mime-types`),
     ffmpeg = require(`fluent-ffmpeg`),
     // ---------------------------------------------------------------------------------
@@ -38,50 +38,68 @@ const
                             // extract headers and final url from response
                             {responseHeaders, finalUrl} = metafetch,
                             // content type (odoklassniki/soundcloud band-aid lol)
-                            contentType = /.*(?:x-mpegurl|audio\/mpegurl).*$/ui.test(responseHeaders[`content-type`]) ? `m3u8` : mime.extension(responseHeaders[`content-type`]);
+                            contentType = /.*(?:x-mpegurl|audio\/mpegurl).*$/ui.test(responseHeaders[`content-type`]) ? `m3u8` : mime.extension(responseHeaders[`content-type`]),
+                            // probe media source ...
+                            launchProbe = (probeSource, origUrl, resolvedUrl, resolvedType, resolvedHeaders) => {
+                                ffmpeg
+                                    // probe input
+                                    .ffprobe(probeSource, (err, metaprobe) => {
+                                        if (err) {
+                                            // reject
+                                            resolve(new resolver({url: url, fetched: true, probed: false, errmsg: `unable to probe ${ url }: ${ err[`message`] }`}));
+                                        } else {
+                                            // resolve
+                                            resolve(new resolver({
+                                                // original url
+                                                url: origUrl,
+                                                // success fetch
+                                                fetched: true,
+                                                // success probe
+                                                probed: true,
+                                                // url to feed ffmpeg
+                                                mediaLocation: resolvedUrl,
+                                                // resource type
+                                                contentType: resolvedType,
+                                                // resource size
+                                                contentLength: resolvedHeaders[`content-length`],
+                                                // encoding
+                                                contentEncoding: resolvedHeaders[`content-encoding`],
+                                                // probe metadata
+                                                metadata: metaprobe
+                                            }));
+                                        }
+                                    });
+
+                            };
                         // fetch fails if content type is not retrieved/evaluates to false ...
                         if (contentType) {
-                            let
-                                // set probe source
-                                probeSrc = null;
-                            // IMPOSSIBLE TO PIPE M3U8 FILES TO FFPROBE/FFMPEG ==> USE URL
-                            if (contentType === `m3u8`) {
-                                // probe url
-                                probeSrc = finalUrl;
-                                // destroy readable TO BE CONFIRMED
-                                readbl.destroy();
+                            // yt returns a 2xx text/plain payload containg the media url
+                            // however the GET for said url never happens client-side ...
+                            // so we have to fetch a 2nd time
+                            if (contentType === `txt`) {
+                                let
+                                    // reset to string
+                                    probeSrc = ``;
+                                // ATTACH HANDLERS HERE
+                                readbl
+                                    // eslint-disable-next-line no-return-assign
+                                    .on(`data`, chunk => probeSrc += chunk.toString(`utf8`))
+                                    .on(`end`, () => {
+                                        // we can't escape a small pyramid of doom here ...
+                                        fetchUrl(probeSrc, (err, meta) => {
+                                            // 2nd fetch fails ...
+                                            if (err) {
+                                                resolve(new resolver({url: url, fetched: false, probed: false, errmsg: err[`message`]}));
+                                            } else {
+                                                // launch probe on readable
+                                                launchProbe(meta[`finalUrl`], url, meta[`finalUrl`], mime.extension(meta[`responseHeaders`][`content-type`]), meta[`responseHeaders`]);
+                                            }
+                                        });
+                                    });
                             } else {
-                                // probe readable
-                                probeSrc = readbl;
+                                // launch probe on resolved url
+                                launchProbe(finalUrl, url, finalUrl, contentType, responseHeaders);
                             }
-                            ffmpeg
-                                // probe input
-                                .ffprobe(probeSrc, (err, metaprobe) => {
-                                    if (err) {
-                                        // reject
-                                        resolve(new resolver({url: url, fetched: true, probed: false, errmsg: `unable to probe ${ url }: ${ err[`message`] }`}));
-                                    } else {
-                                        // resolve
-                                        resolve(new resolver({
-                                            // original url
-                                            url: url,
-                                            // success fetch
-                                            fetched: true,
-                                            // success probe
-                                            probed: true,
-                                            // url to feed ffmpeg
-                                            mediaLocation: finalUrl,
-                                            // resource type
-                                            contentType: contentType,
-                                            // resource size
-                                            contentLength: responseHeaders[`content-length`],
-                                            // encoding
-                                            contentEncoding: responseHeaders[`content-encoding`],
-                                            // probe metadata
-                                            metadata: metaprobe
-                                        }));
-                                    }
-                                });
                         } else {
                             // reject
                             resolve(new resolver({url: url, fetched: true, probed: false, errmsg: `unable to retrieve content type for ${ url }`}));
@@ -93,7 +111,7 @@ const
                         resolve(new resolver({url: url, fetched: false, probed: false, errmsg: `unable to retrieve response headers: remote server returned code ${ metafetch[`status`] }`}));
                     }
                 })
-                .on(`error`, err => resolve({url: url, fetched: false, probed: false, errmsg: err[`message`]}));
+                .on(`error`, err => resolve(new resolver({url: url, fetched: false, probed: false, errmsg: err[`message`]})));
         });
 
 module.exports = {probeMedia};
