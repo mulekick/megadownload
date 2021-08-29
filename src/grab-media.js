@@ -99,7 +99,7 @@ const
                 .reduce((r, x) => {
                     const
                         // extract url and duration
-                        {mediaLocation, metadata: {format: {duration, format_long_name}, streams}} = x;
+                        {mediaLocation, contentType, metadata: {format: {duration}, streams}} = x;
                     // add properties, spread, push in accumulator
                     r.push(...streams
                         // reminder: target object comes first ...
@@ -110,7 +110,7 @@ const
                             // save url
                             _mediaLocation: mediaLocation,
                             // save format
-                            _mediaFormat: format_long_name,
+                            _mediaFormat: contentType,
                             // round stream durations
                             _duration: Math.ceil(Number(duration))
                         }, stream)));
@@ -143,9 +143,9 @@ const
                         // eslint-disable-next-line no-confusing-arrow
                         .sort((a, b) => a[`sample_rate`] && b[`sample_rate`] ? b[`sample_rate`] - a[`sample_rate`] : a[`sample_rate`] ? -1 : b[`sample_rate`] ? 1 : 0)[0];
 
-                // check that audio and video streams are present, throw error if not
+                // check that audio and video streams are present for current media, throw error if not
                 if (vid[`codec_type`] !== `video` || aud[`codec_type`] !== `audio`)
-                    throw new Error(`invalid streams, process aborted.`);
+                    throw new Error(`audio: ${ aud[`_mediaLocation`] }\nvideo: ${ vid[`_mediaLocation`] }\ncurrent media contains invalid streams, aborting process.`);
 
                 const
                     // extract remote server
@@ -165,7 +165,7 @@ const
                         audio: aud,
                         video: vid,
                         target: `${ downloaddir }/${ fname.replace(/[^A-Za-z0-9]/gu, ``) }.${ FILE_FORMATS[vid[`_mediaFormat`]] }`,
-                        options: [ `-map 0:${ aud[`index`] }`, `-map 1:${ vid[`index`] }` ]
+                        options: [ `-map 0:${ aud[`index`] }`, `-map 1:${ vid[`index`] }`, `-c:a:0 copy`, `-c:v:0 copy`, `-f ${ FILE_FORMATS[vid[`_mediaFormat`]] }` ]
                     }));
             }
 
@@ -186,7 +186,7 @@ const
             pLog.log(eventLog);
 
             // wait for user confirmation
-            // await confirmFetch(eventLog);
+            await confirmFetch(eventLog);
 
             // hold the line
             process.stdout.write(`\nprocessing, please wait ...`);

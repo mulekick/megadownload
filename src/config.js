@@ -18,9 +18,9 @@ const
 
         // saved files format
         FILE_FORMATS: {
-            [`Apple HTTP Live Streaming`]: `mp4`,
-            [`QuickTime / MOV`]: `mp4`,
-            [`Matroska / WebM`]: `webm`
+            [`m3u8`]: `mp4`,
+            [`webm`]: `webm`,
+            [`mp4`]: `mp4`
         },
 
         // default download dir

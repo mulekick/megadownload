@@ -69,7 +69,7 @@ const
                 // transcoding done
                 .on(`end`, () => {
                     // ensure all writes to log file are completed
-                    logfile.end(`\ntranscoding succeed.`, () => resolve(new resolver({audioSrc: audio[`_mediaLocation`], videoSrc: video[`_mediaLocation`], transcodeSuccessful: true, savedFile: target, logFile: logfileName})));
+                    logfile.end(`\ntranscoding succeeded.`, () => resolve(new resolver({audioSrc: audio[`_mediaLocation`], videoSrc: video[`_mediaLocation`], transcodeSuccessful: true, savedFile: target, logFile: logfileName})));
                 })
                 // transcoding error
                 .on(`error`, err => rm(target, {force: true}, () => {

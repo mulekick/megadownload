@@ -25,7 +25,7 @@ const
         return  `\x1b[32mFROM : ${ host }\x1b[0m\n` +
                 `---------------------------------\n` +
                 `AUDIO STREAM ${ audio[`index`] }\n` +
-                `SOURCE : ${ audio[`_mediaLocation`] }\n` +
+                // `SOURCE : ${ audio[`_mediaLocation`] }\n` +
                 `TYPE : ${ audio[`codec_long_name`] }\n` +
                 `SAMPLE RATE : ${ isNaN(audio[`sample_rate`]) ? `N/A` : audio[`sample_rate`] / 1000 } kHz\n` +
                 `BIT RATE : ${ isNaN(audio[`bit_rate`]) ? `N/A` : audio[`bit_rate`] / 1000 } kbps\n` +
@@ -33,7 +33,7 @@ const
                 `DURATION : ${ audio[`duration`] }\n` +
                 `---------------------------------\n` +
                 `VIDEO STREAM ${ video[`index`] }\n` +
-                `SOURCE : ${ video[`_mediaLocation`] }\n` +
+                // `SOURCE : ${ video[`_mediaLocation`] }\n` +
                 `TYPE : ${ video[`codec_long_name`] }\n` +
                 `RESOLUTION : ${ video[`width`] }x${ video[`height`] }\n` +
                 `BIT RATE : ${ isNaN(video[`bit_rate`]) ? `N/A` : video[`bit_rate`] / 1000 } kbps\n` +
