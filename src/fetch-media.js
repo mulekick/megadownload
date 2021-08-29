@@ -12,7 +12,8 @@ const
     // ---------------------------------------------------------------------------------
     // load modules
     ffmpeg = require(`fluent-ffmpeg`),
-    {createWriteStream, rm} = require(`fs`),
+    {rm} = require(`fs`),
+    {logger} = require(`./logger`),
     // ---------------------------------------------------------------------------------
     // Config module
     {USER_AGENT} = require(`./config`),
@@ -26,27 +27,12 @@ const
             const
                 // extract source, target, type and log
                 {audio, video, target, options} = media,
-                // file system writable options
-                wsopts = {
-                    // write fails if path exists
-                    flags: `wx`,
-                    // close fd automatically
-                    autoClose: true,
-                    // do not emit close event
-                    emitClose: false
-                },
                 // log file
                 logfileName = `${ target }.log`,
-                // create writable stream to local path
-                logfile = createWriteStream(logfileName, wsopts);
-
-            // set event listeners for logger
-            logfile
-                .on(`error`, err => rm(`${ target }.log`, {force: true}, () => {
+                // transcoding log
+                tLog = new logger(logfileName, err => rm(`${ target }.log`, {force: true}, () => {
                     resolve(new resolver({audioSrc: audio[`_mediaLocation`], videoSrc: video[`_mediaLocation`], transcodeSuccessful: false, errmsg: `error opening log file: ${ err[`message`] }`}));
-                }));
-
-            const
+                })),
                 // create ffmpeg command
                 // mp4 format needs a 'seekable' target, so we can't pipe to a writable and have to use ffmpeg's builtins
                 // output format is mandatory for the wrapper, can't set it through the options
@@ -61,21 +47,25 @@ const
             // set event listeners for command
             ffcmd
                 // CLI command output
-                .on(`start`, cmd => logfile.write(`\nffmpeg spawned:\n${ cmd }`))
+                .on(`start`, cmd => tLog.log(`\nffmpeg spawned:\n${ cmd }`))
                 // input codec data
-                .on(`codecData`, o => logfile.write(`\ninput codec data: ${ JSON.stringify(o) }`))
+                .on(`codecData`, o => tLog.log(`\ninput codec data: ${ JSON.stringify(o) }`))
                 // transcoding events
-                .on(`stderr`, msg => logfile.write(`\n${ msg }`))
+                .on(`stderr`, msg => tLog.log(`\n${ msg }`))
                 // transcoding done
                 .on(`end`, () => {
                     // ensure all writes to log file are completed
-                    logfile.end(`\ntranscoding succeeded.`, () => resolve(new resolver({audioSrc: audio[`_mediaLocation`], videoSrc: video[`_mediaLocation`], transcodeSuccessful: true, savedFile: target, logFile: logfileName})));
+                    tLog.done(`\ntranscoding succeeded.`, () => {
+                        resolve(new resolver({audioSrc: audio[`_mediaLocation`], videoSrc: video[`_mediaLocation`], transcodeSuccessful: true, savedFile: target, logFile: logfileName}));
+                    });
                 })
                 // transcoding error
                 .on(`error`, err => rm(target, {force: true}, () => {
                     // ensure all writes to log file are completed
                     // eslint-disable-next-line max-nested-callbacks
-                    logfile.end(`\ntranscoding error occured: ${ err[`message`] }`, () => resolve(new resolver({audioSrc: audio[`_mediaLocation`], videoSrc: video[`_mediaLocation`], transcodeSuccessful: false, errmsg: err[`message`], logFile: logfileName})));
+                    tLog.done(`\ntranscoding error occured: ${ err[`message`] }`, () => {
+                        resolve(new resolver({audioSrc: audio[`_mediaLocation`], videoSrc: video[`_mediaLocation`], transcodeSuccessful: false, errmsg: err[`message`], logFile: logfileName}));
+                    });
                 }));
 
             // run

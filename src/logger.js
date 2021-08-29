@@ -3,7 +3,7 @@
 const
     // ---------------------------------------------------------------------------------
     // load modules
-    {createWriteStream, rm} = require(`fs`),
+    {createWriteStream} = require(`fs`),
     // ---------------------------------------------------------------------------------
     // file system writable options
     wsopts = {
@@ -44,11 +44,11 @@ const
     };
 
 class logger {
-    constructor(logfile) {
+    constructor(logfile, cbError) {
         // create writable stream to local path
         this.logger = createWriteStream(logfile, wsopts);
         // set event listeners for logger
-        this.logger.on(`error`, err => rm(logfile, {force: true}, () => process.stderr.write(err[`message`])));
+        this.logger.on(`error`, cbError);
     }
 
     // write to file
@@ -57,8 +57,8 @@ class logger {
     }
 
     // signal EOF
-    done() {
-        this.logger.end(``);
+    done(finalWrite, cbEnd) {
+        this.logger.end(finalWrite, cbEnd);
     }
 
     // writes completed

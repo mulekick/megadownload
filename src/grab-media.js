@@ -17,6 +17,7 @@ const
     // ---------------------------------------------------------------------------------
     // load modules
     {createInterface} = require(`readline`),
+    {rm} = require(`fs`),
     {uniqueNamesGenerator, adjectives, colors, languages, starWars} = require(`unique-names-generator`),
     {logger, formatProbe} = require(`./logger`),
     {probeMedia} = require(`./probe-media`),
@@ -29,7 +30,7 @@ const
     [ file, downloaddir = DOWNLOAD_DIR ] = process.argv.slice(2),
     // ---------------------------------------------------------------------------------
     // process log
-    pLog = new logger(LOG_FILE),
+    pLog = new logger(LOG_FILE, err => rm(LOG_FILE, {force: true}, () => process.stderr.write(err[`message`]))),
     // ---------------------------------------------------------------------------------
     // user confirmation
     confirmFetch = m => new Promise((resolve, reject) => {
@@ -217,7 +218,7 @@ const
             // wait for the logger to complete the writes ...
             await pLog.finished();
 
-            process.stdout.write(`---------------------------------`);
+            process.stdout.write(`\n---------------------------------`);
             process.stdout.write(`\ndone.`);
             process.stdout.write(`\n`);
 
@@ -226,7 +227,7 @@ const
 
         } catch (err) {
             // output message to stderr
-            process.stderr.write(`---------------------------------`);
+            process.stderr.write(`\n---------------------------------`);
             process.stderr.write(`\nerror occured: ${ err.message }`);
             process.stderr.write(`\n`);
 
