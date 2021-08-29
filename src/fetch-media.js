@@ -14,6 +14,12 @@ const
     ffmpeg = require(`fluent-ffmpeg`),
     {createWriteStream, rm} = require(`fs`),
     // ---------------------------------------------------------------------------------
+    // Config module
+    {USER_AGENT} = require(`./config`),
+    // ---------------------------------------------------------------------------------
+    // ffmpeg options
+    FFMPEG_INPUT_OPTS = [ `-user_agent`, `'${ USER_AGENT }'` ],
+    // ---------------------------------------------------------------------------------
     fetchMedia = media =>
         // eslint-disable-next-line implicit-arrow-linebreak
         new Promise(resolve => {
@@ -45,8 +51,10 @@ const
                 // mp4 format needs a 'seekable' target, so we can't pipe to a writable and have to use ffmpeg's builtins
                 // output format is mandatory for the wrapper, can't set it through the options
                 ffcmd = ffmpeg()
-                    .input(audio[`_mediaLocation`].replace(/&range=\d+-\d+/u, ``))
-                    .input(video[`_mediaLocation`].replace(/&range=\d+-\d+/u, ``))
+                    .input(audio[`_mediaLocation`].replace(/&(?:range|bytes)=\d+-\d+/u, ``))
+                    .inputOptions(FFMPEG_INPUT_OPTS)
+                    .input(video[`_mediaLocation`].replace(/&(?:range|bytes)=\d+-\d+/u, ``))
+                    .inputOptions(FFMPEG_INPUT_OPTS)
                     .outputOptions(options)
                     .output(target);
 

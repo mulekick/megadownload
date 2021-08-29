@@ -186,7 +186,7 @@ const
             pLog.log(eventLog);
 
             // wait for user confirmation
-            await confirmFetch(eventLog);
+            // await confirmFetch(eventLog);
 
             // hold the line
             process.stdout.write(`\nprocessing, please wait ...`);

@@ -14,21 +14,26 @@ const
     mime = require(`mime-types`),
     ffmpeg = require(`fluent-ffmpeg`),
     // ---------------------------------------------------------------------------------
+    // Config module
+    {USER_AGENT} = require(`./config`),
+    // ---------------------------------------------------------------------------------
     // http readable options
-    rsopts =  {
+    FETCH_OPTS =  {
         headers: {
             Connection: `keep-alive`,
-            'User-Agent': `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36`
-            // 'User-Agent': `Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1`
+            'User-Agent': USER_AGENT
         }
     },
+    // ---------------------------------------------------------------------------------
+    // ffprobe options
+    FFMPEG_INPUT_OPTS = [ `-user_agent`, `'${ USER_AGENT }'` ],
     // ---------------------------------------------------------------------------------
     probeMedia = url =>
         // eslint-disable-next-line implicit-arrow-linebreak
         new Promise(resolve => {
             const
                 // create request
-                readbl = new FetchStream(url, rsopts);
+                readbl = new FetchStream(url, FETCH_OPTS);
             // set event listeners for readable
             readbl
                 .on(`meta`, metafetch => {
@@ -40,10 +45,10 @@ const
                             // content type (odoklassniki/soundcloud band-aid lol)
                             contentType = /.*(?:x-mpegurl|audio\/mpegurl).*$/ui.test(responseHeaders[`content-type`]) ? `m3u8` : mime.extension(responseHeaders[`content-type`]),
                             // probe media source ...
-                            launchProbe = (probeSource, origUrl, resolvedUrl, resolvedType, resolvedHeaders) => {
+                            launchProbe = (origUrl, resolvedUrl, resolvedType, resolvedHeaders) => {
                                 ffmpeg
-                                    // probe input
-                                    .ffprobe(probeSource, (err, metaprobe) => {
+                                    // probe input (provide input options as second argument)
+                                    .ffprobe(resolvedUrl, FFMPEG_INPUT_OPTS, (err, metaprobe) => {
                                         if (err) {
                                             // reject
                                             resolve(new resolver({url: url, fetched: true, probed: false, errmsg: `unable to probe ${ url }: ${ err[`message`] }`}));
@@ -69,7 +74,6 @@ const
                                             }));
                                         }
                                     });
-
                             };
                         // fetch fails if content type is not retrieved/evaluates to false ...
                         if (contentType) {
@@ -79,28 +83,32 @@ const
                             if (contentType === `txt`) {
                                 let
                                     // reset to string
-                                    probeSrc = ``;
+                                    payloadUrl = ``;
                                 // ATTACH HANDLERS HERE
                                 readbl
                                     // eslint-disable-next-line no-return-assign
-                                    .on(`data`, chunk => probeSrc += chunk.toString(`utf8`))
+                                    .on(`data`, chunk => payloadUrl += chunk.toString(`utf8`))
                                     .on(`end`, () => {
                                         // we can't escape a small pyramid of doom here ...
-                                        fetchUrl(probeSrc, (err, meta) => {
+                                        fetchUrl(payloadUrl, (err, meta) => {
                                             // 2nd fetch fails ...
                                             if (err) {
                                                 resolve(new resolver({url: url, fetched: false, probed: false, errmsg: err[`message`]}));
                                             } else {
                                                 // launch probe on readable
-                                                launchProbe(meta[`finalUrl`], url, meta[`finalUrl`], mime.extension(meta[`responseHeaders`][`content-type`]), meta[`responseHeaders`]);
+                                                launchProbe(url, meta[`finalUrl`], mime.extension(meta[`responseHeaders`][`content-type`]), meta[`responseHeaders`]);
                                             }
                                         });
                                     });
                             } else {
+                                // destroy readable (TBC)
+                                readbl.destroy();
                                 // launch probe on resolved url
-                                launchProbe(finalUrl, url, finalUrl, contentType, responseHeaders);
+                                launchProbe(url, finalUrl, contentType, responseHeaders);
                             }
                         } else {
+                            // destroy readable (TBC)
+                            readbl.destroy();
                             // reject
                             resolve(new resolver({url: url, fetched: true, probed: false, errmsg: `unable to retrieve content type for ${ url }`}));
                         }
