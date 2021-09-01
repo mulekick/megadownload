@@ -18,15 +18,12 @@ const
     // Config module
     {USER_AGENT} = require(`./config`),
     // ---------------------------------------------------------------------------------
-    // ffmpeg options
-    FFMPEG_INPUT_OPTS = [ `-user_agent`, `'${ USER_AGENT }'` ],
-    // ---------------------------------------------------------------------------------
     fetchMedia = media =>
         // eslint-disable-next-line implicit-arrow-linebreak
         new Promise(resolve => {
             const
-                // extract source, target, type and log
-                {audio, video, target, options} = media,
+                // extract referer, source, target, type and log
+                {referer, audio, video, target, options} = media,
                 // log file
                 logfileName = `${ target }.log`,
                 // transcoding log
@@ -37,10 +34,12 @@ const
                 // mp4 format needs a 'seekable' target, so we can't pipe to a writable and have to use ffmpeg's builtins
                 // output format is mandatory for the wrapper, can't set it through the options
                 ffcmd = ffmpeg()
-                    .input(audio[`_mediaLocation`].replace(/&(?:range|bytes)=\d+-\d+/u, ``))
-                    .inputOptions(FFMPEG_INPUT_OPTS)
-                    .input(video[`_mediaLocation`].replace(/&(?:range|bytes)=\d+-\d+/u, ``))
-                    .inputOptions(FFMPEG_INPUT_OPTS)
+                    .input(audio[`_mediaLocation`]
+                        .replace(/&(?:range|bytes)=\d+-\d+/u, ``))
+                    .inputOptions([ `-user_agent`, `'${ USER_AGENT }'`/* , `-headers`, `'Referer: ${ referer }'`*/ ])
+                    .input(video[`_mediaLocation`]
+                        .replace(/&(?:range|bytes)=\d+-\d+/u, ``))
+                    .inputOptions([ `-user_agent`, `'${ USER_AGENT }'`/* , `-headers`, `'Referer: ${ referer }'`*/ ])
                     .outputOptions(options)
                     .output(target);
 

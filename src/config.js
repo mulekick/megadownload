@@ -16,11 +16,19 @@ const
         // media formats
         STREAM_FORMATS: [ `Apple HTTP Live Streaming`, `QuickTime / MOV`, `Matroska / WebM` ],
 
-        // saved files format
+        // saved files format (matching HTTP response content type header...)
         FILE_FORMATS: {
-            [`m3u8`]: `mp4`,
+            // 'video/mp4' --> .mp4
+            // 'mp4' --> .mp4
+            [`mp4`]: `mp4`,
+            // 'video/webm' --> .webm
             [`webm`]: `webm`,
-            [`mp4`]: `mp4`
+            // 'application/x-mpegURL;charset=UTF-8', 'application/x-mpegURL', 'application/x-mpegurl' --> .m3u8
+            // 'application/vnd.apple.mpegurl; charset=UTF-8,' 'application/vnd.apple.mpegurl' --> .m3u8
+            // 'audio/x-mpegurl' --> .m3u8
+            [`m3u8`]: `mp4`,
+            // 'video/mp2t' --> ts
+            [`ts`]: `mp4`
         },
 
         // default download dir
@@ -29,11 +37,11 @@ const
         // default log file
         LOG_FILE: `logs/${ new Date().getTime() }.media.grab.log`,
 
-        // host isolation
-        HOST_RGX: /^(?:http|https):\/\/(?<host>(?:[a-zA-Z0-9-]+\.)+[a-zA-Z0-9-]+)(?::\d+)?\/[^ "]+$/u,
+        // referer isolation
+        REFERER_RGX: /^(?<referer>http|https:\/\/(?:[a-zA-Z0-9-]+\.)+[a-zA-Z0-9-]+)(?::\d+)?\/[^ "]+$/u,
 
         // url isolation TO BE CONFIRMED
-        ISOLATION_RGX: /(?:http|https):\/\/(?:[a-zA-Z0-9-]+\.)+[a-zA-Z0-9-]+(?::\d+)?\/[^ '"\s]*(?:videoplayback\?|h264|mp4|m3u8|bytes=|\W\d{3,4}p\W)[^ '"\s]*/gu
+        ISOLATION_RGX: /(?:http|https):\/\/(?:[a-zA-Z0-9-]+\.)+[a-zA-Z0-9-]+(?::\d+)?\/[^ '"\s]*(?:(?:\.|\/)m3u8|(?:\.|video_)mp4|\W\d{3,4}p\W|videoplayback\?|master\.json\?base64_init=1|\/streams\/|talk\/hls\/)[^ '"\s]*/gu
 
     };
 

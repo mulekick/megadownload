@@ -1,9 +1,9 @@
 'use strict';
 
 class probedMedia {
-    constructor({host = null, audio = null, video = null, target = null, options = null} = {}) {
+    constructor({referer = null, audio = null, video = null, target = null, options = null} = {}) {
         // eslint-disable-next-line object-curly-newline
-        Object.assign(this, {host, audio, video, target, options});
+        Object.assign(this, {referer, audio, video, target, options});
     }
 }
 
@@ -18,6 +18,7 @@ const
     // load modules
     {createInterface} = require(`readline`),
     {rm} = require(`fs`),
+    mime = require(`mime-types`),
     {uniqueNamesGenerator, adjectives, colors, languages, starWars} = require(`unique-names-generator`),
     {logger, formatProbe} = require(`./logger`),
     {probeMedia} = require(`./probe-media`),
@@ -100,7 +101,7 @@ const
                 .reduce((r, x) => {
                     const
                         // extract url and duration
-                        {mediaLocation, contentType, metadata: {format: {duration}, streams}} = x;
+                        {mediaLocation, locationReferer, contentType, contentLength, contentRange, metadata: {format: {duration}, streams}} = x;
                     // add properties, spread, push in accumulator
                     r.push(...streams
                         // reminder: target object comes first ...
@@ -110,8 +111,14 @@ const
                         .map(stream => Object.assign({
                             // save url
                             _mediaLocation: mediaLocation,
-                            // save format
-                            _mediaFormat: contentType,
+                            // save referer
+                            _mediaReferer: locationReferer,
+                            // save file extension
+                            _mediaFormat: mime.extension(contentType),
+                            // save length
+                            _mediaByteLength: contentLength,
+                            // save range
+                            _mediaByteRange: contentRange,
                             // round stream durations
                             _duration: Math.ceil(Number(duration))
                         }, stream)));
@@ -127,7 +134,8 @@ const
                     duration = resultsArray[0][`_duration`],
 
                     // next media start index
-                    nextMediaIndex = resultsArray.findIndex(x => x[`_duration`] !== duration),
+                    // nextMediaIndex = resultsArray.findIndex(x => x[`_duration`] !== duration),
+                    nextMediaIndex = resultsArray.findIndex(x => Math.abs(x[`_duration`] - duration) > 1),
 
                     // isolate media
                     mediaStreams = resultsArray.splice(0, nextMediaIndex === -1 ? resultsArray.length : nextMediaIndex),
@@ -149,24 +157,28 @@ const
                     throw new Error(`audio: ${ aud[`_mediaLocation`] }\nvideo: ${ vid[`_mediaLocation`] }\ncurrent media contains invalid streams, aborting process.`);
 
                 const
-                    // extract remote server
-                    [ host ] = vid[`_mediaLocation`].match(HOST_RGX).slice(1),
                     // generate random name
                     fname = uniqueNamesGenerator({
                         dictionaries: [ adjectives, colors, languages, starWars ],
                         separator: ``,
                         style: `capital`,
                         length: 4
-                    });
+                    }),
+                    // mapping options, audio then video
+                    mapOpts = [ `-map 0:${ aud[`index`] }`, `-map 1:${ vid[`index`] }` ],
+                    // audio stream options, copy if same file format as video stream (except for webm/weba) ...
+                    audOpts = aud[`_mediaFormat`] === vid[`_mediaFormat`] ? [ `-c:a:0 copy` ] : aud[`_mediaFormat`] === `weba` && vid[`_mediaFormat`] === `webm` ? [ `-c:a:0 copy` ] : [],
+                    // video stream options, always copy
+                    vidOpts = [ `-c:v:0 copy` ];
 
-                // ceate media
+                // create media
                 successfulProbes
                     .push(new probedMedia({
-                        host: host,
+                        referer: vid[`_mediaReferer`],
                         audio: aud,
                         video: vid,
                         target: `${ downloaddir }/${ fname.replace(/[^A-Za-z0-9]/gu, ``) }.${ FILE_FORMATS[vid[`_mediaFormat`]] }`,
-                        options: [ `-map 0:${ aud[`index`] }`, `-map 1:${ vid[`index`] }`, `-c:a:0 copy`, `-c:v:0 copy`, `-f ${ FILE_FORMATS[vid[`_mediaFormat`]] }` ]
+                        options: [ ...mapOpts, ...audOpts, ...vidOpts, `-f ${ FILE_FORMATS[vid[`_mediaFormat`]] }` ]
                     }));
             }
 
@@ -180,7 +192,7 @@ const
                         `SUCCESSFUL PROBES: ${ successfulProbes.length }\n` +
                         `---------------------------------\n` +
                         successfulProbes
-                            .map(x => formatProbe(x))
+                            .map((x, i) => formatProbe(x, i))
                             .join(`\n`);
 
             // output

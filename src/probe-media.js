@@ -1,9 +1,9 @@
 'use strict';
 
 class resolver {
-    constructor({url = null, fetched = null, probed = null, errmsg = null, mediaLocation = null, contentType = null, contentLength = null, contentEncoding = null, metadata = null} = {}) {
+    constructor({url = null, fetched = null, probed = null, errmsg = null, mediaLocation = null, locationReferer = null, contentType = null, contentLength = null, contentEncoding = null, metadata = null} = {}) {
         // eslint-disable-next-line object-curly-newline
-        Object.assign(this, {url, fetched, probed, errmsg, mediaLocation, contentType, contentLength, contentEncoding, metadata});
+        Object.assign(this, {url, fetched, probed, errmsg, mediaLocation, locationReferer, contentType, contentLength, contentEncoding, metadata});
     }
 }
 
@@ -11,29 +11,30 @@ const
     // ---------------------------------------------------------------------------------
     // load modules
     {FetchStream, fetchUrl} = require(`fetch`),
-    mime = require(`mime-types`),
     ffmpeg = require(`fluent-ffmpeg`),
     // ---------------------------------------------------------------------------------
     // Config module
-    {USER_AGENT} = require(`./config`),
+    {USER_AGENT, REFERER_RGX} = require(`./config`),
     // ---------------------------------------------------------------------------------
-    // http readable options
-    FETCH_OPTS =  {
-        headers: {
-            Connection: `keep-alive`,
-            'User-Agent': USER_AGENT
-        }
-    },
-    // ---------------------------------------------------------------------------------
-    // ffprobe options
-    FFMPEG_INPUT_OPTS = [ `-user_agent`, `'${ USER_AGENT }'` ],
+    // content type (odoklassniki/soundcloud band-aid lol)
+    // eslint-disable-next-line no-confusing-arrow
+    bandAid = x => x === `audio/x-hx-aac-adts` ? `audio/aac` : /.*(?:x-mpegurl|audio\/mpegurl).*$/ui.test(x) ? `application/vnd.apple.mpegurl` : x,
     // ---------------------------------------------------------------------------------
     probeMedia = url =>
         // eslint-disable-next-line implicit-arrow-linebreak
         new Promise(resolve => {
             const
+                // extract host
+                [ referer ] = url.match(REFERER_RGX).slice(1),
                 // create request
-                readbl = new FetchStream(url, FETCH_OPTS);
+                // eslint-disable-next-line prefer-object-spread
+                readbl = new FetchStream(url, {
+                    headers: {
+                        Connection: `keep-alive`,
+                        Referer: `${ referer }`,
+                        'User-Agent': USER_AGENT
+                    }
+                });
             // set event listeners for readable
             readbl
                 .on(`meta`, metafetch => {
@@ -43,12 +44,12 @@ const
                             // extract headers and final url from response
                             {responseHeaders, finalUrl} = metafetch,
                             // content type (odoklassniki/soundcloud band-aid lol)
-                            contentType = /.*(?:x-mpegurl|audio\/mpegurl).*$/ui.test(responseHeaders[`content-type`]) ? `m3u8` : mime.extension(responseHeaders[`content-type`]),
+                            contentType = bandAid(responseHeaders[`content-type`]),
                             // probe media source ...
                             launchProbe = (origUrl, resolvedUrl, resolvedType, resolvedHeaders) => {
                                 ffmpeg
                                     // probe input (provide input options as second argument)
-                                    .ffprobe(resolvedUrl, FFMPEG_INPUT_OPTS, (err, metaprobe) => {
+                                    .ffprobe(resolvedUrl, [ `-user_agent`, `'${ USER_AGENT }'`, `-headers`, `'Referer: ${ referer }'` ], (err, metaprobe) => {
                                         if (err) {
                                             // reject
                                             resolve(new resolver({url: url, fetched: true, probed: false, errmsg: `unable to probe ${ url }: ${ err[`message`] }`}));
@@ -63,10 +64,14 @@ const
                                                 probed: true,
                                                 // url to feed ffmpeg
                                                 mediaLocation: resolvedUrl,
+                                                // referer for the url
+                                                locationReferer: referer,
                                                 // resource type
                                                 contentType: resolvedType,
                                                 // resource size
                                                 contentLength: resolvedHeaders[`content-length`],
+                                                // resource bytes range
+                                                contentRange: resolvedHeaders[`content-range`],
                                                 // encoding
                                                 contentEncoding: resolvedHeaders[`content-encoding`],
                                                 // probe metadata
@@ -80,7 +85,7 @@ const
                             // yt returns a 2xx text/plain payload containg the media url
                             // however the GET for said url never happens client-side ...
                             // so we have to fetch a 2nd time
-                            if (contentType === `txt`) {
+                            if (contentType === `text/plain`) {
                                 let
                                     // reset to string
                                     payloadUrl = ``;
@@ -96,7 +101,7 @@ const
                                                 resolve(new resolver({url: url, fetched: false, probed: false, errmsg: err[`message`]}));
                                             } else {
                                                 // launch probe on readable
-                                                launchProbe(url, meta[`finalUrl`], mime.extension(meta[`responseHeaders`][`content-type`]), meta[`responseHeaders`]);
+                                                launchProbe(url, meta[`finalUrl`], bandAid(meta[`responseHeaders`][`content-type`]), meta[`responseHeaders`]);
                                             }
                                         });
                                     });

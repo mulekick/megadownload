@@ -16,13 +16,13 @@ const
     },
     // ---------------------------------------------------------------------------------
     // probe formatting
-    formatProbe = x => {
+    formatProbe = (x, i) => {
         const
             // extract
             // eslint-disable-next-line no-unused-vars
-            {host, audio, video, target} = x;
+            {referer, audio, video, target} = x;
         // eslint-disable-next-line prefer-template
-        return  `\x1b[32mFROM : ${ host }\x1b[0m\n` +
+        return  `\x1b[32mMEDIA ${ i } FROM : ${ referer }\x1b[0m\n` +
                 `---------------------------------\n` +
                 `AUDIO STREAM ${ audio[`index`] }\n` +
                 // `SOURCE : ${ audio[`_mediaLocation`] }\n` +

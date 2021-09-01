@@ -4,3 +4,5 @@
 /logs/*
 # exclude debug files
 /.vscode/*
+# exclude test files
+/test*
