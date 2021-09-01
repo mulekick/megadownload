@@ -18,9 +18,7 @@ const
     // load modules
     {createInterface} = require(`readline`),
     {rm} = require(`fs`),
-    _mime = require(`mime-types`),
-    _progress = require(`cli-progress`),
-    _colors = require(`colors`),
+    mime = require(`mime-types`),
     {uniqueNamesGenerator, adjectives, colors, languages, starWars} = require(`unique-names-generator`),
     {logger, formatProbe} = require(`./logger`),
     {probeMedia} = require(`./probe-media`),
@@ -139,7 +137,7 @@ const
                             // save referer
                             _mediaReferer: locationReferer,
                             // save file extension
-                            _mediaFormat: _mime.extension(contentType),
+                            _mediaFormat: mime.extension(contentType),
                             // save length
                             _mediaByteLength: contentLength,
                             // save range
@@ -229,17 +227,8 @@ const
             // hold the line
             process.stdout.write(`\nprocessing, please wait ...`);
 
-            const
-                // create new container for progress bars
-                pgb = new _progress.MultiBar({
-                    format: `${ _colors.brightBlue(`{bar}`) } | ${ _colors.green(`{file}`) } | {value}/{total} s`,
-                    stream: process.stdout,
-                    stopOnComplete: false,
-                    clearOnComplete: false,
-                    barsize: 80,
-                    barCompleteChar: `\u2588`,
-                    barIncompleteChar: `\u2591`
-                });
+            // start progress bars
+            pLog.barstart();
 
             // empty promises array
             promisesArray = [];
@@ -248,7 +237,7 @@ const
             for (let counter = 0; counter < successfulProbes.length; counter++) {
                 // assign progress bar to probe
                 Object.assign(successfulProbes[counter], {
-                    bar: pgb.create(successfulProbes[counter][`video`][`_duration`], 0, {file: successfulProbes[counter][`referer`]})
+                    bar: pLog.bar(successfulProbes[counter][`video`][`_duration`], successfulProbes[counter][`referer`])
                 });
                 // start async function immediately
                 promisesArray.push(fetchMedia(successfulProbes[counter]));
@@ -258,7 +247,7 @@ const
             resultsArray = await Promise.all(promisesArray);
 
             // stop progress bars
-            pgb.stop();
+            pLog.barstop();
 
             // log successful fetches
             eventLog = `\n---------------------------------` +
@@ -323,6 +312,8 @@ createInterface({
         urls = urls
             // filter duplicates
             .filter((x, i, a) => a.indexOf(x) === i)
+            // apply vimeo band aid
+            .map(x => x.replace(`.json?base64_init=1`, `.m3u8`))
             // sort
             .sort();
         // process
