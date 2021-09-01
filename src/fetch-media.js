@@ -16,14 +16,14 @@ const
     {logger} = require(`./logger`),
     // ---------------------------------------------------------------------------------
     // Config module
-    {USER_AGENT} = require(`./config`),
+    {USER_AGENT, EVENT_RGX} = require(`./config`),
     // ---------------------------------------------------------------------------------
     fetchMedia = media =>
         // eslint-disable-next-line implicit-arrow-linebreak
         new Promise(resolve => {
             const
-                // extract referer, source, target, type and log
-                {referer, audio, video, target, options} = media,
+                // extract referer, streams, target, options and progress bar
+                {referer, audio, video, target, options, bar} = media,
                 // log file
                 logfileName = `${ target }.log`,
                 // transcoding log
@@ -50,9 +50,26 @@ const
                 // input codec data
                 .on(`codecData`, o => tLog.log(`\ninput codec data: ${ JSON.stringify(o) }`))
                 // transcoding events
-                .on(`stderr`, msg => tLog.log(`\n${ msg }`))
+                .on(`stderr`, msg => {
+                    const
+                        // transcoded duration
+                        match = msg.match(EVENT_RGX);
+                    // if found
+                    if (match !== null) {
+                        const
+                            // extract transcoded time, convert in seconds
+                            [ h, m, s ] = match[4].split(`:`).map(x => Number(x));
+                        // update progress bar
+                        bar.update(s + m * 6e1 + h * 3.6e3);
+                    }
+                    // log
+                    tLog.log(`${ msg }`);
+                })
                 // transcoding done
                 .on(`end`, () => {
+                    // update and stop progress bar
+                    bar.update(video[`_duration`]);
+                    bar.stop();
                     // ensure all writes to log file are completed
                     tLog.done(`\ntranscoding succeeded.`, () => {
                         resolve(new resolver({audioSrc: audio[`_mediaLocation`], videoSrc: video[`_mediaLocation`], transcodeSuccessful: true, savedFile: target, logFile: logfileName}));

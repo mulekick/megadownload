@@ -4,6 +4,7 @@ const
     // ---------------------------------------------------------------------------------
     // load modules
     {createWriteStream} = require(`fs`),
+    _colors = require(`colors`),
     // ---------------------------------------------------------------------------------
     // file system writable options
     wsopts = {
@@ -22,7 +23,7 @@ const
             // eslint-disable-next-line no-unused-vars
             {referer, audio, video, target} = x;
         // eslint-disable-next-line prefer-template
-        return  `\x1b[32mMEDIA ${ i } FROM : ${ referer }\x1b[0m\n` +
+        return  _colors.green(`MEDIA ${ i } FROM : ${ referer }\n`) +
                 `---------------------------------\n` +
                 `AUDIO STREAM ${ audio[`index`] }\n` +
                 // `SOURCE : ${ audio[`_mediaLocation`] }\n` +
@@ -39,7 +40,7 @@ const
                 `BIT RATE : ${ isNaN(video[`bit_rate`]) ? `N/A` : video[`bit_rate`] / 1000 } kbps\n` +
                 `DURATION : ${ video[`duration`] }\n` +
                 `---------------------------------\n` +
-                `\x1b[31mSAVED AS : ${ target }\x1b[0m\n` +
+                _colors.red(`SAVED AS : ${ target }\n`) +
                 `---------------------------------\n`;
     };
 

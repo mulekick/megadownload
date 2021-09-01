@@ -18,14 +18,16 @@ const
     // load modules
     {createInterface} = require(`readline`),
     {rm} = require(`fs`),
-    mime = require(`mime-types`),
+    _mime = require(`mime-types`),
+    _progress = require(`cli-progress`),
+    _colors = require(`colors`),
     {uniqueNamesGenerator, adjectives, colors, languages, starWars} = require(`unique-names-generator`),
     {logger, formatProbe} = require(`./logger`),
     {probeMedia} = require(`./probe-media`),
     {fetchMedia} = require(`./fetch-media`),
     // ---------------------------------------------------------------------------------
     // Config module
-    {MIN_MEDIA_DURATION, MIN_NB_OF_STREAMS, STREAM_FORMATS, FILE_FORMATS, DOWNLOAD_DIR, LOG_FILE, ISOLATION_RGX, HOST_RGX} = require(`./config`),
+    {MIN_MEDIA_DURATION, MIN_NB_OF_STREAMS, STREAM_FORMATS, FILE_FORMATS, DOWNLOAD_DIR, LOG_FILE, ISOLATION_RGX} = require(`./config`),
     // ---------------------------------------------------------------------------------
     // session file, download directory
     [ file, downloaddir = DOWNLOAD_DIR ] = process.argv.slice(2),
@@ -73,13 +75,19 @@ const
             // await the resolution of all promises
             resultsArray = await Promise.all(promisesArray);
 
+            const
+                // logs
+                [ failedFetches, failedProbes ] = [ [], [] ];
+
             // filter failed fetchings and default options
             resultsArray = resultsArray
                 .filter(x => {
                     switch (true) {
                     case !x[`fetched`] :
+                        failedFetches.push(x);
                         return false;
                     case !x[`probed`] :
+                        failedProbes.push(x);
                         return false;
                     case x[`metadata`][`format`][`duration`] === `N/A` :
                         return false;
@@ -93,6 +101,23 @@ const
                         return true;
                     }
                 });
+
+
+            // log failed fetches and probes
+            // eslint-disable-next-line prefer-template
+            eventLog = `---------------------------------\n` +
+                        `FAILED FETCHES : ${ failedFetches.length }\n` +
+                        failedFetches
+                            .map(x => `${ x[`url`] }\n${ x[`errmsg`] }\n`)
+                            .join(`\n`) +
+                        `---------------------------------\n` +
+                        `FAILED PROBES : ${ failedProbes.length }\n` +
+                        failedProbes
+                            .map(x => `${ x[`url`] }\n${ x[`errmsg`] }\n`)
+                            .join(`\n`);
+
+            // output
+            pLog.log(eventLog);
 
             // media will be uniquely identified by their duration in seconds
             // we will virtually demux here by spreading the contents of metadata[`streams`]
@@ -114,7 +139,7 @@ const
                             // save referer
                             _mediaReferer: locationReferer,
                             // save file extension
-                            _mediaFormat: mime.extension(contentType),
+                            _mediaFormat: _mime.extension(contentType),
                             // save length
                             _mediaByteLength: contentLength,
                             // save range
@@ -204,18 +229,38 @@ const
             // hold the line
             process.stdout.write(`\nprocessing, please wait ...`);
 
+            const
+                // create new container for progress bars
+                pgb = new _progress.MultiBar({
+                    format: `${ _colors.brightBlue(`{bar}`) } | ${ _colors.green(`{file}`) } | {value}/{total} s`,
+                    stream: process.stdout,
+                    stopOnComplete: false,
+                    clearOnComplete: false,
+                    barsize: 80,
+                    barCompleteChar: `\u2588`,
+                    barIncompleteChar: `\u2591`
+                });
+
             // empty promises array
             promisesArray = [];
 
             // for each file to process
-            for (let counter = 0; counter < successfulProbes.length; counter++)
+            for (let counter = 0; counter < successfulProbes.length; counter++) {
+                // assign progress bar to probe
+                Object.assign(successfulProbes[counter], {
+                    bar: pgb.create(successfulProbes[counter][`video`][`_duration`], 0, {file: successfulProbes[counter][`referer`]})
+                });
                 // start async function immediately
                 promisesArray.push(fetchMedia(successfulProbes[counter]));
+            }
 
             // await the resolution of all promises
             resultsArray = await Promise.all(promisesArray);
 
-            // log successful fetchs
+            // stop progress bars
+            pgb.stop();
+
+            // log successful fetches
             eventLog = `\n---------------------------------` +
                         `\n${ resultsArray.join(`\n`) }` +
                         `\n---------------------------------` +

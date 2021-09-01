@@ -52,7 +52,7 @@ const
                                     .ffprobe(resolvedUrl, [ `-user_agent`, `'${ USER_AGENT }'`, `-headers`, `'Referer: ${ referer }'` ], (err, metaprobe) => {
                                         if (err) {
                                             // reject
-                                            resolve(new resolver({url: url, fetched: true, probed: false, errmsg: `unable to probe ${ url }: ${ err[`message`] }`}));
+                                            resolve(new resolver({url: url, fetched: true, probed: false, errmsg: `failed to probe: ${ err[`message`] }`}));
                                         } else {
                                             // resolve
                                             resolve(new resolver({
@@ -98,6 +98,7 @@ const
                                         fetchUrl(payloadUrl, (err, meta) => {
                                             // 2nd fetch fails ...
                                             if (err) {
+                                                // reject
                                                 resolve(new resolver({url: url, fetched: false, probed: false, errmsg: err[`message`]}));
                                             } else {
                                                 // launch probe on readable
@@ -106,22 +107,21 @@ const
                                         });
                                     });
                             } else {
-                                // destroy readable (TBC)
-                                readbl.destroy();
+                                // ditch data
+                                readbl.resume();
                                 // launch probe on resolved url
                                 launchProbe(url, finalUrl, contentType, responseHeaders);
                             }
                         } else {
-                            // destroy readable (TBC)
-                            readbl.destroy();
+                            // ditch data
+                            readbl.resume();
                             // reject
-                            resolve(new resolver({url: url, fetched: true, probed: false, errmsg: `unable to retrieve content type for ${ url }`}));
+                            resolve(new resolver({url: url, fetched: true, probed: false, errmsg: `failed to retrieve content type`}));
                         }
-
                     // server refuses request
                     } else {
                         // no http readable retrieved, reject
-                        resolve(new resolver({url: url, fetched: false, probed: false, errmsg: `unable to retrieve response headers: remote server returned code ${ metafetch[`status`] }`}));
+                        resolve(new resolver({url: url, fetched: false, probed: false, errmsg: `failed to retrieve response headers: remote server returned code ${ metafetch[`status`] }`}));
                     }
                 })
                 .on(`error`, err => resolve(new resolver({url: url, fetched: false, probed: false, errmsg: err[`message`]})));

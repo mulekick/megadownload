@@ -6,6 +6,8 @@
     "grab": "node src/grab-media.js"
   },
   "dependencies": {
+    "cli-progress": "^3.9.0",
+    "colors": "^1.4.0",
     "fetch": "^1.1.0",
     "fluent-ffmpeg": "^2.1.2",
     "mime-types": "^2.1.32",
