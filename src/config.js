@@ -8,7 +8,7 @@ const
         USER_AGENT: `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36`,
 
         // min. media duration (seconds)
-        MIN_MEDIA_DURATION: 600,
+        MIN_MEDIA_DURATION: 10,
 
         // min number of streams by media
         MIN_NB_OF_STREAMS: 1,
@@ -31,11 +31,11 @@ const
             [`ts`]: `mp4`
         },
 
-        // default download dir
-        DOWNLOAD_DIR: `/mnt/d`,
-
         // default log file
         LOG_FILE: `logs/${ new Date().getTime() }.media.grab.log`,
+
+        // file path validation
+        PATH_RGX: /^\/?(?<path>(?:(?:[^/\s]+|'[^/']+'|"[^/"]+")\/)*)(?<file>[^/\s]+|'[^/']+'|"[^/"]+"){1}$/u,
 
         // referer isolation
         REFERER_RGX: /^(?<referer>http|https:\/\/(?:[a-zA-Z0-9-]+\.)+[a-zA-Z0-9-]+)(?::\d+)?\/[^ "]+$/u,

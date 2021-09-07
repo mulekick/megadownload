@@ -13,12 +13,12 @@ const
     // load modules
     ffmpeg = require(`fluent-ffmpeg`),
     {rm} = require(`fs`),
-    {logger} = require(`./logger`),
+    {logger} = require(`./utils`),
     // ---------------------------------------------------------------------------------
     // Config module
     {USER_AGENT, EVENT_RGX} = require(`./config`),
     // ---------------------------------------------------------------------------------
-    fetchMedia = media =>
+    fetchMedia = (media, debug) =>
         // eslint-disable-next-line implicit-arrow-linebreak
         new Promise(resolve => {
             const
@@ -27,9 +27,13 @@ const
                 // log file
                 logfileName = `${ target }.log`,
                 // transcoding log
-                tLog = new logger(logfileName, err => rm(`${ target }.log`, {force: true}, () => {
-                    resolve(new resolver({audioSrc: audio[`_mediaLocation`], videoSrc: video[`_mediaLocation`], transcodeSuccessful: false, errmsg: `error opening log file: ${ err[`message`] }`}));
-                })),
+                tLog = new logger({
+                    // logger being instantiated with null as logFile will result in logs being discarded ...
+                    logFile: debug ? logfileName : null,
+                    cbError: err => rm(`${ target }.log`, {force: true}, () => {
+                        resolve(new resolver({audioSrc: audio[`_mediaLocation`], videoSrc: video[`_mediaLocation`], transcodeSuccessful: false, errmsg: `error opening log file: ${ err[`message`] }`}));
+                    })
+                }),
                 // create ffmpeg command
                 // mp4 format needs a 'seekable' target, so we can't pipe to a writable and have to use ffmpeg's builtins
                 // output format is mandatory for the wrapper, can't set it through the options

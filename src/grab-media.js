@@ -7,31 +7,19 @@ class probedMedia {
     }
 }
 
-let
-    // ---------------------------------------------------------------------------------
-    // url storage
-    urls = [];
-    // ---------------------------------------------------------------------------------
-
 const
     // ---------------------------------------------------------------------------------
     // load modules
     {createInterface} = require(`readline`),
-    {rm} = require(`fs`),
-    mime = require(`mime-types`),
+    {rm, createReadStream} = require(`fs`),
+    {extension} = require(`mime-types`),
     {uniqueNamesGenerator, adjectives, colors, languages, starWars} = require(`unique-names-generator`),
-    {logger, formatProbe} = require(`./logger`),
     {probeMedia} = require(`./probe-media`),
     {fetchMedia} = require(`./fetch-media`),
+    {output, logger, grabber, extractUrls} = require(`./utils`),
     // ---------------------------------------------------------------------------------
     // Config module
-    {MIN_MEDIA_DURATION, MIN_NB_OF_STREAMS, STREAM_FORMATS, FILE_FORMATS, DOWNLOAD_DIR, LOG_FILE, ISOLATION_RGX} = require(`./config`),
-    // ---------------------------------------------------------------------------------
-    // session file, download directory
-    [ file, downloaddir = DOWNLOAD_DIR ] = process.argv.slice(2),
-    // ---------------------------------------------------------------------------------
-    // process log
-    pLog = new logger(LOG_FILE, err => rm(LOG_FILE, {force: true}, () => process.stderr.write(err[`message`]))),
+    {STREAM_FORMATS, FILE_FORMATS} = require(`./config`),
     // ---------------------------------------------------------------------------------
     // user confirmation
     confirmFetch = m => new Promise((resolve, reject) => {
@@ -43,20 +31,57 @@ const
             .question(`${ m }Do you want to fetch the above media (Y/n) ?\n`, ans => ans === `Y` ? resolve() : reject(new Error(`fetch aborted.`)));
     }),
     // ---------------------------------------------------------------------------------
-    processUrls = async() => {
+    // program options
+    processInputs = async({inputFiles, outputDir, minDuration, minStreams, audio, debug, logFile}) => {
+
+        const
+            // ---------------------------------------------------------------------------------
+            // file system log
+            pLog = new logger({
+                // logger being instantiated with null as logFile will result in logs being discarded ...
+                logFile: debug ? logFile : null,
+                cbError: err => rm(logFile, {force: true}, () => process.stderr.write(err[`message`]))
+            }),
+            // ---------------------------------------------------------------------------------
+            // stdout log
+            pOut = new output({});
+            // ---------------------------------------------------------------------------------
 
         try {
 
             let
                 // variables
-                [ promisesArray, resultsArray, successfulProbes, eventLog ] = [ null, null, [], null ];
+                [ promisesArray, resultsArray, successfulProbes, eventLog ] = [ [], null, [], null ];
+
+            // for each file to process
+            for (let counter = 0; counter < inputFiles.length; counter++)
+                // start async function immediately
+                promisesArray.push(extractUrls(inputFiles[counter]));
+
+            // await the resolution of all promises
+            resultsArray = await Promise.all(promisesArray);
+
+            // aggregate results
+            resultsArray = resultsArray
+                .reduce((r, x) => {
+                    // spread and push elements
+                    r.push(...x);
+                    // return
+                    return r;
+                }, [])
+                // filter duplicates
+                .filter((x, i, a) => a.indexOf(x) === i)
+                // apply vimeo band aid
+                .map(x => x.replace(`.json?base64_init=1`, `.m3u8`))
+                // sort
+                .sort();
 
             // log urls to process
             // eslint-disable-next-line prefer-template
             eventLog = `---------------------------------\n` +
-                        `TOTAL URLS : ${ urls.length }\n` +
+                        `TOTAL URLS : ${ resultsArray.length }\n` +
                         `---------------------------------\n` +
-                        urls
+                        resultsArray
                             .join(`\n`);
 
             // output
@@ -66,9 +91,9 @@ const
             promisesArray = [];
 
             // for each file to process
-            for (let counter = 0; counter < urls.length; counter++)
+            for (let counter = 0; counter < resultsArray.length; counter++)
                 // start async function immediately
-                promisesArray.push(probeMedia(urls[counter]));
+                promisesArray.push(probeMedia(resultsArray[counter]));
 
             // await the resolution of all promises
             resultsArray = await Promise.all(promisesArray);
@@ -89,9 +114,9 @@ const
                         return false;
                     case x[`metadata`][`format`][`duration`] === `N/A` :
                         return false;
-                    case Number(x[`metadata`][`format`][`duration`]) < MIN_MEDIA_DURATION :
+                    case Number(x[`metadata`][`format`][`duration`]) < minDuration :
                         return false;
-                    case Number(x[`metadata`][`format`][`nb_streams`]) < MIN_NB_OF_STREAMS :
+                    case Number(x[`metadata`][`format`][`nb_streams`]) < minStreams :
                         return false;
                     case !STREAM_FORMATS.includes(x[`metadata`][`format`][`format_long_name`]) :
                         return false;
@@ -137,7 +162,7 @@ const
                             // save referer
                             _mediaReferer: locationReferer,
                             // save file extension
-                            _mediaFormat: mime.extension(contentType),
+                            _mediaFormat: extension(contentType),
                             // save length
                             _mediaByteLength: contentLength,
                             // save range
@@ -200,7 +225,7 @@ const
                         referer: vid[`_mediaReferer`],
                         audio: aud,
                         video: vid,
-                        target: `${ downloaddir }/${ fname.replace(/[^A-Za-z0-9]/gu, ``) }.${ FILE_FORMATS[vid[`_mediaFormat`]] }`,
+                        target: `${ outputDir }/${ fname.replace(/[^A-Za-z0-9]/gu, ``) }.${ FILE_FORMATS[vid[`_mediaFormat`]] }`,
                         options: [ ...mapOpts, ...audOpts, ...vidOpts, `-f ${ FILE_FORMATS[vid[`_mediaFormat`]] }` ]
                     }));
             }
@@ -215,7 +240,7 @@ const
                         `SUCCESSFUL PROBES: ${ successfulProbes.length }\n` +
                         `---------------------------------\n` +
                         successfulProbes
-                            .map((x, i) => formatProbe(x, i))
+                            .map((x, i) => pOut.formatProbe(x, i))
                             .join(`\n`);
 
             // output
@@ -225,10 +250,11 @@ const
             await confirmFetch(eventLog);
 
             // hold the line
+            // eslint-disable-next-line no-unreachable
             process.stdout.write(`\nprocessing, please wait ...`);
 
             // start progress bars
-            pLog.barstart();
+            pOut.barstart();
 
             // empty promises array
             promisesArray = [];
@@ -237,17 +263,17 @@ const
             for (let counter = 0; counter < successfulProbes.length; counter++) {
                 // assign progress bar to probe
                 Object.assign(successfulProbes[counter], {
-                    bar: pLog.bar(successfulProbes[counter][`video`][`_duration`], successfulProbes[counter][`referer`])
+                    bar: pOut.bar(successfulProbes[counter][`video`][`_duration`], successfulProbes[counter][`referer`])
                 });
                 // start async function immediately
-                promisesArray.push(fetchMedia(successfulProbes[counter]));
+                promisesArray.push(fetchMedia(successfulProbes[counter], debug));
             }
 
             // await the resolution of all promises
             resultsArray = await Promise.all(promisesArray);
 
             // stop progress bars
-            pLog.barstop();
+            pOut.barstop();
 
             // log successful fetches
             eventLog = `\n---------------------------------` +
@@ -258,7 +284,7 @@ const
             // output
             pLog.log(eventLog);
 
-            // all loging is done
+            // all logging is done
             pLog.done();
 
             // wait for the logger to complete the writes ...
@@ -290,32 +316,30 @@ const
             process.exit(1);
         }
 
-    },
+    };
     // ---------------------------------------------------------------------------------
-    // load modules
-    {createReadStream} = require(`fs`);
-    // ---------------------------------------------------------------------------------
-createInterface({
-    input: createReadStream(file),
-    crlfDelay: Infinity
-})
-    // set event handlers
-    .on(`line`, line => {
-        const
-            // extract urls
-            m = line.match(ISOLATION_RGX);
-        // stor matches in array
-        if (m !== null)
-            urls.push(...m);
-    })
-    .on(`close`, () => {
-        urls = urls
-            // filter duplicates
-            .filter((x, i, a) => a.indexOf(x) === i)
-            // apply vimeo band aid
-            .map(x => x.replace(`.json?base64_init=1`, `.m3u8`))
-            // sort
-            .sort();
-        // process
-        processUrls();
-    });
+
+try {
+
+    const
+        // ---------------------------------------------------------------------------------
+        grab = new grabber({input: process.argv}),
+        opts = grab.getOptions();
+        // ---------------------------------------------------------------------------------
+
+    // launch
+    processInputs(opts);
+
+} catch (err) {
+
+    // output message to stderr
+    process.stderr.write(`\n---------------------------------`);
+    process.stderr.write(`\nerror occured: ${ err.message }`);
+    process.stderr.write(`\n`);
+
+    // return error code
+    process.exit(1);
+
+}
+
+

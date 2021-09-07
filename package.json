@@ -2,12 +2,11 @@
   "name": "grab-media",
   "version": "1.0.0",
   "description": "grab online media from urls and save to disk, work in progress",
-  "scripts": {
-    "grab": "node src/grab-media.js"
-  },
+  "scripts": {},
   "dependencies": {
     "chalk": "^4.1.0",
     "cli-progress": "^3.9.0",
+    "commander": "^8.1.0",
     "fetch": "^1.1.0",
     "fluent-ffmpeg": "^2.1.2",
     "mime-types": "^2.1.32",
