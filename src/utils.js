@@ -12,12 +12,25 @@ const
     progress = require(`cli-progress`),
     // ---------------------------------------------------------------------------------
     // Config module
-    {MIN_MEDIA_DURATION, MIN_NB_OF_STREAMS, LOG_FILE, PATH_RGX, ISOLATION_RGX} = require(`./config`),
+    {CLI_PROBE_COLOR, CLI_SAVE_COLOR, MIN_MEDIA_DURATION, MIN_NB_OF_STREAMS, LOG_FILE, PATH_RGX, ISOLATION_RGX} = require(`./config`),
     // ---------------------------------------------------------------------------------
     // file system writable options
     wsopts = {
         // write fails if path exists
         flags: `wx`,
+        // encoding
+        encoding: `utf8`,
+        // close fd automatically
+        autoClose: true,
+        // emit close event
+        emitClose: true
+    },
+    // file system readable options
+    rsopts = {
+        // read only
+        flags: `r`,
+        // encoding
+        encoding: `utf8`,
         // close fd automatically
         autoClose: true,
         // emit close event
@@ -44,12 +57,17 @@ const
     // async url isolation
     extractUrls = file =>
         // eslint-disable-next-line implicit-arrow-linebreak
-        new Promise(resolve => {
+        new Promise((resolve, reject) => {
             const
-                urls = [];
-            // open interface to file
+                urls = [],
+                // create readable
+                rs = createReadStream(file, rsopts);
+            rs
+                // set event handlers
+                .on(`error`, err => reject(err));
+            // read file
             createInterface({
-                input: createReadStream(file),
+                input: rs,
                 crlfDelay: Infinity
             })
                 // set event handlers
@@ -112,7 +130,7 @@ class output {
             // eslint-disable-next-line no-unused-vars
             {referer, audio, video, target} = x;
         // eslint-disable-next-line prefer-template
-        return  chalk.green(`MEDIA ${ i } FROM : ${ referer }\n`) +
+        return  chalk.rgb(...CLI_PROBE_COLOR)(`MEDIA ${ i } FROM : ${ referer }\n`) +
                 `---------------------------------\n` +
                 `AUDIO STREAM ${ audio[`index`] }\n` +
                 // `SOURCE : ${ audio[`_mediaLocation`] }\n` +
@@ -129,14 +147,14 @@ class output {
                 `BIT RATE : ${ isNaN(video[`bit_rate`]) ? `N/A` : video[`bit_rate`] / 1000 } kbps\n` +
                 `DURATION : ${ video[`duration`] }\n` +
                 `---------------------------------\n` +
-                chalk.rgb(255, 95, 0)(`SAVED AS : ${ target }\n`) +
+                chalk.rgb(...CLI_SAVE_COLOR)(`SAVED AS : ${ target }\n`) +
                 `---------------------------------\n`;
     }
     // ---------------------------------------------------------------------------------
     barstart() {
         // create new container for progress bars
         this.progressBars = new progress.MultiBar({
-            format: `${ chalk.rgb(255, 95, 0)(`{bar}`) } | ${ chalk.green(`{file}`) } | {value}/{total} s`,
+            format: `${ chalk.rgb(...CLI_SAVE_COLOR)(`{bar}`) } | ${ chalk.rgb(...CLI_PROBE_COLOR)(`{file}`) } | {value}/{total} s`,
             stream: process.stdout,
             stopOnComplete: false,
             clearOnComplete: false,
