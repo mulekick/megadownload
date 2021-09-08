@@ -78,11 +78,11 @@ class grabber {
                 .requiredOption(`-i, --input-files <inputFiles...>`, `http session/HAR input files`)
                 .requiredOption(`-o, --output-dir <outputDir>`, `downloads/logs output directory`, validFilePath)
                 // other
-                .option(`-l, --min-length <minDuration>`, `minimum media duration in seconds`, validMinDuration, MIN_MEDIA_DURATION)
+                .option(`-d, --min-duration <minDuration>`, `minimum media duration in seconds`, validMinDuration, MIN_MEDIA_DURATION)
                 .option(`-n, --min-streams <minStreams>`, `minimum number of streams in media`, validMinStreams, MIN_NB_OF_STREAMS)
                 .option(`-a, --audio`, `select audio streams only`, false)
                 // debug
-                .option(`-d, --debug`, `output process and download logs`, false)
+                .option(`-v, --verbose`, `output process and download logs`, false)
                 .option(`-f, --log-file <logFile>`, `process log file`, validFilePath, LOG_FILE)
                 // init
                 .parse(this.input)

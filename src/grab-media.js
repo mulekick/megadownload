@@ -11,7 +11,7 @@ const
     // ---------------------------------------------------------------------------------
     // load modules
     {createInterface} = require(`readline`),
-    {rm, createReadStream} = require(`fs`),
+    {rm} = require(`fs`),
     {extension} = require(`mime-types`),
     {uniqueNamesGenerator, adjectives, colors, languages, starWars} = require(`unique-names-generator`),
     {probeMedia} = require(`./probe-media`),
