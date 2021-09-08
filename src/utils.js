@@ -98,7 +98,7 @@ class grabber {
                 // other
                 .option(`-d, --min-duration <minDuration>`, `minimum media duration in seconds`, validMinDuration, MIN_MEDIA_DURATION)
                 .option(`-n, --min-streams <minStreams>`, `minimum number of streams in media`, validMinStreams, MIN_NB_OF_STREAMS)
-                .option(`-a, --audio`, `select audio streams only`, false)
+                .option(`-a, --audio-only`, `select audio streams only`, false)
                 // debug
                 .option(`-v, --verbose`, `output process and download logs`, false)
                 .option(`-f, --log-file <logFile>`, `process log file`, validFilePath, LOG_FILE)
@@ -140,13 +140,14 @@ class output {
                 `LAYOUT : ${ audio[`channel_layout`] }\n` +
                 `DURATION : ${ audio[`duration`] }\n` +
                 `---------------------------------\n` +
+            (video === null ? `` :
                 `VIDEO STREAM ${ video[`index`] }\n` +
                 // `SOURCE : ${ video[`_mediaLocation`] }\n` +
                 `ENCODING : ${ video[`codec_long_name`] }\n` +
                 `RESOLUTION : ${ video[`width`] }x${ video[`height`] }\n` +
                 `BIT RATE : ${ isNaN(video[`bit_rate`]) ? `N/A` : video[`bit_rate`] / 1000 } kbps\n` +
                 `DURATION : ${ video[`duration`] }\n` +
-                `---------------------------------\n` +
+                `---------------------------------\n`) +
                 chalk.rgb(...CLI_SAVE_COLOR)(`SAVED AS : ${ target }\n`) +
                 `---------------------------------\n`;
     }
@@ -154,13 +155,15 @@ class output {
     barstart() {
         // create new container for progress bars
         this.progressBars = new progress.MultiBar({
-            format: `${ chalk.rgb(...CLI_SAVE_COLOR)(`{bar}`) } | ${ chalk.rgb(...CLI_PROBE_COLOR)(`{file}`) } | {value}/{total} s`,
+            format: `${ chalk.rgb(...CLI_SAVE_COLOR)(`{bar}`) } | {percentage}% | ${ chalk.rgb(...CLI_PROBE_COLOR)(`{file}`) }`,
+            // format: `${ chalk.rgb(...CLI_SAVE_COLOR)(`{bar}`) } | ${ chalk.rgb(...CLI_PROBE_COLOR)(`{file}`) } | {value}/{total} s`,
             stream: process.stdout,
             stopOnComplete: false,
             clearOnComplete: false,
             barsize: 80,
             barCompleteChar: `\u2588`,
-            barIncompleteChar: `\u2591`
+            barIncompleteChar: `\u2591`,
+            autopadding: true
         });
     }
     // ---------------------------------------------------------------------------------

@@ -16,10 +16,10 @@ const
     {uniqueNamesGenerator, adjectives, colors, languages, starWars} = require(`unique-names-generator`),
     {probeMedia} = require(`./probe-media`),
     {fetchMedia} = require(`./fetch-media`),
-    {output, logger, grabber, extractUrls} = require(`./utils`),
+    {output, logger, extractUrls} = require(`./utils`),
     // ---------------------------------------------------------------------------------
     // Config module
-    {STREAM_FORMATS, FILE_FORMATS} = require(`./config`),
+    {vimeoUrlBandAid, removeRangeBandAid, MEDIA_FORMATS, VIDEO_FORMAT_BY_MIME_TYPE, AUDIO_FORMAT_BY_MIME_TYPE} = require(`./config`),
     // ---------------------------------------------------------------------------------
     // user confirmation
     confirmFetch = m => new Promise((resolve, reject) => {
@@ -32,14 +32,14 @@ const
     }),
     // ---------------------------------------------------------------------------------
     // program options
-    processInputs = async({inputFiles, outputDir, minDuration, minStreams, audio, debug, logFile}) => {
+    processInputs = async({inputFiles, outputDir, minDuration, minStreams, audioOnly, verbose, logFile}) => {
 
         const
             // ---------------------------------------------------------------------------------
             // file system log
             pLog = new logger({
                 // logger being instantiated with null as logFile will result in logs being discarded ...
-                logFile: debug ? logFile : null,
+                logFile: verbose ? logFile : null,
                 cbError: err => rm(logFile, {force: true}, () => process.stderr.write(err[`message`]))
             }),
             // ---------------------------------------------------------------------------------
@@ -72,7 +72,7 @@ const
                 // filter duplicates
                 .filter((x, i, a) => a.indexOf(x) === i)
                 // apply vimeo band aid
-                .map(x => x.replace(`.json?base64_init=1`, `.m3u8`))
+                .map(x => vimeoUrlBandAid(x))
                 // sort
                 .sort();
 
@@ -118,7 +118,7 @@ const
                         return false;
                     case Number(x[`metadata`][`format`][`nb_streams`]) < minStreams :
                         return false;
-                    case !STREAM_FORMATS.includes(x[`metadata`][`format`][`format_long_name`]) :
+                    case !MEDIA_FORMATS.includes(x[`metadata`][`format`][`format_long_name`]) :
                         return false;
                     default :
                         return true;
@@ -158,11 +158,11 @@ const
                         // eslint-disable-next-line prefer-object-spread
                         .map(stream => Object.assign({
                             // save url
-                            _mediaLocation: mediaLocation,
+                            _mediaLocation: removeRangeBandAid(mediaLocation),
                             // save referer
                             _mediaReferer: locationReferer,
                             // save file extension
-                            _mediaFormat: extension(contentType),
+                            _mediaMimeType: extension(contentType),
                             // save length
                             _mediaByteLength: contentLength,
                             // save range
@@ -177,57 +177,78 @@ const
                 .sort((a, b) => b[`_duration`] - a[`_duration`]);
 
             while (resultsArray[0]) {
+
                 const
                     // current media duration
                     duration = resultsArray[0][`_duration`],
 
                     // next media start index
                     // nextMediaIndex = resultsArray.findIndex(x => x[`_duration`] !== duration),
-                    nextMediaIndex = resultsArray.findIndex(x => Math.abs(x[`_duration`] - duration) > 1),
+                    nextMediaIndex = audioOnly ? resultsArray.findIndex(x => x[`_duration`] !== duration) : resultsArray.findIndex(x => Math.abs(x[`_duration`] - duration) > 1),
 
                     // isolate media
                     mediaStreams = resultsArray.splice(0, nextMediaIndex === -1 ? resultsArray.length : nextMediaIndex),
 
-                    // isolate video stream
-                    vid = mediaStreams
-                        // sort streams by height
-                        // eslint-disable-next-line no-confusing-arrow
-                        .sort((a, b) => a[`height`] && b[`height`] ? b[`height`] - a[`height`] : a[`height`] ? -1 : b[`height`] ? 1 : 0)[0],
-
-                    // isolate audio stream
-                    aud = mediaStreams
-                        // sort streams by highest bitrate
-                        // eslint-disable-next-line no-confusing-arrow
-                        .sort((a, b) => a[`sample_rate`] && b[`sample_rate`] ? b[`sample_rate`] - a[`sample_rate`] : a[`sample_rate`] ? -1 : b[`sample_rate`] ? 1 : 0)[0];
-
-                // check that audio and video streams are present for current media, throw error if not
-                if (vid[`codec_type`] !== `video` || aud[`codec_type`] !== `audio`)
-                    throw new Error(`audio: ${ aud[`_mediaLocation`] }\nvideo: ${ vid[`_mediaLocation`] }\ncurrent media contains invalid streams, aborting process.`);
-
-                const
                     // generate random name
                     fname = uniqueNamesGenerator({
                         dictionaries: [ adjectives, colors, languages, starWars ],
                         separator: ``,
                         style: `capital`,
                         length: 4
-                    }),
+                    });
+
+                let
+                    // init streams and options
+                    [ vidStr, audStr, mapOpts, audOpts, vidOpts, fformat ] = [ null, null, [], [], [], null ];
+
+                // isolate audio stream
+                audStr = mediaStreams
+                    // sort streams by highest bitrate
+                    // eslint-disable-next-line no-confusing-arrow
+                    .sort((a, b) => a[`sample_rate`] && b[`sample_rate`] ? b[`sample_rate`] - a[`sample_rate`] : a[`sample_rate`] ? -1 : b[`sample_rate`] ? 1 : 0)[0];
+
+                if (audioOnly) {
+
+                    // mapping options, audio only
+                    mapOpts = [ `-map 0:${ audStr[`index`] }` ];
+
+                    // save format ...
+                    fformat = AUDIO_FORMAT_BY_MIME_TYPE[audStr[`_mediaMimeType`]];
+
+                } else {
+
+                    // isolate video stream
+                    vidStr = mediaStreams
+                        // sort streams by height
+                        // eslint-disable-next-line no-confusing-arrow
+                        .sort((a, b) => a[`height`] && b[`height`] ? b[`height`] - a[`height`] : a[`height`] ? -1 : b[`height`] ? 1 : 0)[0];
+
+                    // check that audio and video streams are present for current media, throw error if not
+                    if (vidStr[`codec_type`] !== `video` || audStr[`codec_type`] !== `audio`)
+                        throw new Error(`audio: ${ audStr[`_mediaLocation`] }\nvideo: ${ vidStr[`_mediaLocation`] }\ncurrent media contains invalid streams, aborting process.`);
+
                     // mapping options, audio then video
-                    mapOpts = [ `-map 0:${ aud[`index`] }`, `-map 1:${ vid[`index`] }` ],
+                    mapOpts = [ `-map 0:${ audStr[`index`] }`, `-map 1:${ vidStr[`index`] }` ];
                     // audio stream options, copy if same file format as video stream (except for webm/weba) ...
-                    audOpts = aud[`_mediaFormat`] === vid[`_mediaFormat`] ? [ `-c:a:0 copy` ] : aud[`_mediaFormat`] === `weba` && vid[`_mediaFormat`] === `webm` ? [ `-c:a:0 copy` ] : [],
+                    audOpts = audStr[`_mediaMimeType`] === vidStr[`_mediaMimeType`] ? [ `-c:a:0 copy` ] : audStr[`_mediaMimeType`] === `weba` && vidStr[`_mediaMimeType`] === `webm` ? [ `-c:a:0 copy` ] : [];
                     // video stream options, always copy
                     vidOpts = [ `-c:v:0 copy` ];
+
+                    // save format ...
+                    fformat = VIDEO_FORMAT_BY_MIME_TYPE[vidStr[`_mediaMimeType`]];
+
+                }
 
                 // create media
                 successfulProbes
                     .push(new probedMedia({
-                        referer: vid[`_mediaReferer`],
-                        audio: aud,
-                        video: vid,
-                        target: `${ outputDir }/${ fname.replace(/[^A-Za-z0-9]/gu, ``) }.${ FILE_FORMATS[vid[`_mediaFormat`]] }`,
-                        options: [ ...mapOpts, ...audOpts, ...vidOpts, `-f ${ FILE_FORMATS[vid[`_mediaFormat`]] }` ]
+                        referer: audioOnly ? audStr[`_mediaReferer`] : vidStr[`_mediaReferer`],
+                        audio: audStr,
+                        video: vidStr,
+                        target: `${ outputDir }/${ fname.replace(/[^A-Za-z0-9]/gu, ``) }.${ fformat }`,
+                        options: [ ...mapOpts, ...audOpts, ...vidOpts, `-f ${ fformat }` ]
                     }));
+
             }
 
             // no successful probes, exit
@@ -263,10 +284,10 @@ const
             for (let counter = 0; counter < successfulProbes.length; counter++) {
                 // assign progress bar to probe
                 Object.assign(successfulProbes[counter], {
-                    bar: pOut.bar(successfulProbes[counter][`video`][`_duration`], successfulProbes[counter][`referer`])
+                    bar: pOut.bar(audioOnly ? successfulProbes[counter][`audio`][`_duration`] : successfulProbes[counter][`video`][`_duration`], successfulProbes[counter][`referer`])
                 });
                 // start async function immediately
-                promisesArray.push(fetchMedia(successfulProbes[counter], debug));
+                promisesArray.push(fetchMedia(successfulProbes[counter], audioOnly, verbose));
             }
 
             // await the resolution of all promises
@@ -319,27 +340,4 @@ const
     };
     // ---------------------------------------------------------------------------------
 
-try {
-
-    const
-        // ---------------------------------------------------------------------------------
-        grab = new grabber({input: process.argv}),
-        opts = grab.getOptions();
-        // ---------------------------------------------------------------------------------
-
-    // launch
-    processInputs(opts);
-
-} catch (err) {
-
-    // output message to stderr
-    process.stderr.write(`\n---------------------------------`);
-    process.stderr.write(`\nerror occured: ${ err.message }`);
-    process.stderr.write(`\n`);
-
-    // return error code
-    process.exit(1);
-
-}
-
-
+module.exports = {processInputs};

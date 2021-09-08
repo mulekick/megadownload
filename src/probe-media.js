@@ -1,9 +1,9 @@
 'use strict';
 
 class resolver {
-    constructor({url = null, fetched = null, probed = null, errmsg = null, mediaLocation = null, locationReferer = null, contentType = null, contentLength = null, contentEncoding = null, metadata = null} = {}) {
+    constructor({url = null, fetched = null, probed = null, errmsg = null, mediaLocation = null, locationReferer = null, contentType = null, contentLength = null, contentRange = null, contentEncoding = null, metadata = null} = {}) {
         // eslint-disable-next-line object-curly-newline
-        Object.assign(this, {url, fetched, probed, errmsg, mediaLocation, locationReferer, contentType, contentLength, contentEncoding, metadata});
+        Object.assign(this, {url, fetched, probed, errmsg, mediaLocation, locationReferer, contentType, contentLength, contentRange, contentEncoding, metadata});
     }
 }
 
@@ -14,11 +14,7 @@ const
     ffmpeg = require(`fluent-ffmpeg`),
     // ---------------------------------------------------------------------------------
     // Config module
-    {USER_AGENT, REFERER_RGX} = require(`./config`),
-    // ---------------------------------------------------------------------------------
-    // content type (odoklassniki/soundcloud band-aid lol)
-    // eslint-disable-next-line no-confusing-arrow
-    bandAid = x => x === `audio/x-hx-aac-adts` ? `audio/aac` : /.*(?:x-mpegurl|audio\/mpegurl).*$/ui.test(x) ? `application/vnd.apple.mpegurl` : x,
+    {odoklassnikiHeaderbandAid, USER_AGENT, REFERER_RGX} = require(`./config`),
     // ---------------------------------------------------------------------------------
     probeMedia = url =>
         // eslint-disable-next-line implicit-arrow-linebreak
@@ -44,7 +40,7 @@ const
                             // extract headers and final url from response
                             {responseHeaders, finalUrl} = metafetch,
                             // content type (odoklassniki/soundcloud band-aid lol)
-                            contentType = bandAid(responseHeaders[`content-type`]),
+                            contentType = odoklassnikiHeaderbandAid(responseHeaders[`content-type`]),
                             // probe media source ...
                             launchProbe = (origUrl, resolvedUrl, resolvedType, resolvedHeaders) => {
                                 ffmpeg
@@ -52,7 +48,7 @@ const
                                     .ffprobe(resolvedUrl, [ `-user_agent`, `'${ USER_AGENT }'`, `-headers`, `'Referer: ${ referer }'` ], (err, metaprobe) => {
                                         if (err) {
                                             // reject
-                                            resolve(new resolver({url: url, fetched: true, probed: false, errmsg: `failed to probe: ${ err[`message`] }`}));
+                                            resolve(new resolver({url: origUrl, fetched: true, probed: false, errmsg: `failed to probe: ${ err[`message`] }`}));
                                         } else {
                                             // resolve
                                             resolve(new resolver({
@@ -101,8 +97,8 @@ const
                                                 // reject
                                                 resolve(new resolver({url: url, fetched: false, probed: false, errmsg: err[`message`]}));
                                             } else {
-                                                // launch probe on readable
-                                                launchProbe(url, meta[`finalUrl`], bandAid(meta[`responseHeaders`][`content-type`]), meta[`responseHeaders`]);
+                                                // launch probe on url
+                                                launchProbe(url, meta[`finalUrl`], odoklassnikiHeaderbandAid(meta[`responseHeaders`][`content-type`]), meta[`responseHeaders`]);
                                             }
                                         });
                                     });

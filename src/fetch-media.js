@@ -18,7 +18,7 @@ const
     // Config module
     {USER_AGENT, EVENT_RGX} = require(`./config`),
     // ---------------------------------------------------------------------------------
-    fetchMedia = (media, debug) =>
+    fetchMedia = (media, audioOnly, verbose) =>
         // eslint-disable-next-line implicit-arrow-linebreak
         new Promise(resolve => {
             const
@@ -29,23 +29,26 @@ const
                 // transcoding log
                 tLog = new logger({
                     // logger being instantiated with null as logFile will result in logs being discarded ...
-                    logFile: debug ? logfileName : null,
+                    logFile: verbose ? logfileName : null,
                     cbError: err => rm(`${ target }.log`, {force: true}, () => {
-                        resolve(new resolver({audioSrc: audio[`_mediaLocation`], videoSrc: video[`_mediaLocation`], transcodeSuccessful: false, errmsg: `error opening log file: ${ err[`message`] }`}));
+                        resolve(new resolver({audioSrc: audio[`_mediaLocation`], videoSrc: audioOnly ? null : video[`_mediaLocation`], transcodeSuccessful: false, errmsg: `error opening log file: ${ err[`message`] }`}));
                     })
                 }),
                 // create ffmpeg command
                 // mp4 format needs a 'seekable' target, so we can't pipe to a writable and have to use ffmpeg's builtins
                 // output format is mandatory for the wrapper, can't set it through the options
                 ffcmd = ffmpeg()
-                    .input(audio[`_mediaLocation`]
-                        .replace(/&(?:range|bytes)=\d+-\d+/u, ``))
-                    .inputOptions([ `-user_agent`, `'${ USER_AGENT }'`/* , `-headers`, `'Referer: ${ referer }'`*/ ])
-                    .input(video[`_mediaLocation`]
-                        .replace(/&(?:range|bytes)=\d+-\d+/u, ``))
-                    .inputOptions([ `-user_agent`, `'${ USER_AGENT }'`/* , `-headers`, `'Referer: ${ referer }'`*/ ])
-                    .outputOptions(options)
-                    .output(target);
+                    .input(audio[`_mediaLocation`])
+                    .inputOptions([ `-user_agent`, `'${ USER_AGENT }'`/* , `-headers`, `'Referer: ${ referer }'`*/ ]);
+
+            if (audioOnly === false)
+                ffcmd
+                    .input(video[`_mediaLocation`])
+                    .inputOptions([ `-user_agent`, `'${ USER_AGENT }'`/* , `-headers`, `'Referer: ${ referer }'`*/ ]);
+
+            ffcmd
+                .outputOptions(options)
+                .output(target);
 
             // set event listeners for command
             ffcmd
@@ -72,11 +75,11 @@ const
                 // transcoding done
                 .on(`end`, () => {
                     // update and stop progress bar
-                    bar.update(video[`_duration`]);
+                    bar.update(audioOnly ? audio[`_duration`] : video[`_duration`]);
                     bar.stop();
                     // ensure all writes to log file are completed
                     tLog.done(`\ntranscoding succeeded.`, () => {
-                        resolve(new resolver({audioSrc: audio[`_mediaLocation`], videoSrc: video[`_mediaLocation`], transcodeSuccessful: true, savedFile: target, logFile: logfileName}));
+                        resolve(new resolver({audioSrc: audio[`_mediaLocation`], videoSrc: audioOnly ? null : video[`_mediaLocation`], transcodeSuccessful: true, savedFile: target, logFile: logfileName}));
                     });
                 })
                 // transcoding error
@@ -84,7 +87,7 @@ const
                     // ensure all writes to log file are completed
                     // eslint-disable-next-line max-nested-callbacks
                     tLog.done(`\ntranscoding error occured: ${ err[`message`] }`, () => {
-                        resolve(new resolver({audioSrc: audio[`_mediaLocation`], videoSrc: video[`_mediaLocation`], transcodeSuccessful: false, errmsg: err[`message`], logFile: logfileName}));
+                        resolve(new resolver({audioSrc: audio[`_mediaLocation`], videoSrc: audioOnly ? null : video[`_mediaLocation`], transcodeSuccessful: false, errmsg: err[`message`], logFile: logfileName}));
                     });
                 }));
 
