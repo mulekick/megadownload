@@ -12,7 +12,7 @@ const
     progress = require(`cli-progress`),
     // ---------------------------------------------------------------------------------
     // Config module
-    {CLI_PROBE_COLOR, CLI_SAVE_COLOR, MIN_MEDIA_DURATION, MIN_NB_OF_STREAMS, LOG_FILE, PATH_RGX, ISOLATION_RGX} = require(`./config`),
+    {CLI_PROBE_COLOR, CLI_SAVE_COLOR, MIN_MEDIA_DURATION, MIN_NB_OF_STREAMS, PROCESS_LOG_FILE, PATH_RGX, ISOLATION_RGX} = require(`./config`),
     // ---------------------------------------------------------------------------------
     // file system writable options
     wsopts = {
@@ -93,15 +93,16 @@ class grabber {
             this.options = program
                 .name(`grab-media`)
                 // required
-                .requiredOption(`-i, --input-files <inputFiles...>`, `http session/HAR input files`)
-                .requiredOption(`-o, --output-dir <outputDir>`, `downloads/logs output directory`, validFilePath)
+                .requiredOption(`-i, --input-files <inputFiles...>`, `space-separated list of input files (http sessions or HAR files)`)
+                .requiredOption(`-o, --output-dir <outputDir>`, `downloaded files / logs directory path`, validFilePath)
                 // other
-                .option(`-d, --min-duration <minDuration>`, `minimum media duration in seconds`, validMinDuration, MIN_MEDIA_DURATION)
-                .option(`-n, --min-streams <minStreams>`, `minimum number of streams in media`, validMinStreams, MIN_NB_OF_STREAMS)
-                .option(`-a, --audio-only`, `select audio streams only`, false)
+                .option(`-d, --min-duration <minDuration>`, `minimum duration in seconds for a media to be downloaded`, validMinDuration, MIN_MEDIA_DURATION)
+                .option(`-n, --min-streams <minStreams>`, `minimum number of streams in a media to be downloaded`, validMinStreams, MIN_NB_OF_STREAMS)
+                .option(`-a, --audio-only`, `download only audio streams from all media and output audio files`, false)
                 // debug
-                .option(`-v, --verbose`, `output process and download logs`, false)
-                .option(`-f, --log-file <logFile>`, `process log file`, validFilePath, LOG_FILE)
+                .option(`-u, --dump-urls`, `parse input files, list urls selected for probing and exit`, false)
+                .option(`-v, --verbose`, `write log files for main process as well as for download/transcode processes`, false)
+                .option(`-f, --log-file <logFile>`, `specify main process log file path`, validFilePath, PROCESS_LOG_FILE)
                 // init
                 .parse(this.input)
                 .opts();
@@ -118,9 +119,9 @@ class grabber {
 
 class output {
     // ---------------------------------------------------------------------------------
-    constructor({progressBars = null}) {
+    constructor({progressBar = null, progressBars = null}) {
         // inline caching optimization
-        Object.assign(this, {progressBars});
+        Object.assign(this, {progressBar, progressBars});
     }
     // ---------------------------------------------------------------------------------
     // eslint-disable-next-line class-methods-use-this
@@ -151,15 +152,34 @@ class output {
                 chalk.rgb(...CLI_SAVE_COLOR)(`SAVED AS : ${ target }\n`) +
                 `---------------------------------\n`;
     }
+
     // ---------------------------------------------------------------------------------
-    barstart() {
+    startProbeBar(numProbes) {
+        // create single progress bar for probes ...
+        this.progressBar = new progress.SingleBar({
+            format: `${ chalk.rgb(...CLI_PROBE_COLOR)(`{bar}`) } | {percentage}% | ETA: {eta}s | {value}/{total}`,
+            stream: process.stdout,
+            stopOnComplete: true,
+            clearOnComplete: true,
+            barsize: 80,
+            barCompleteChar: `\u2588`,
+            barIncompleteChar: `\u2591`,
+            autopadding: true
+        });
+        // start the progress bar
+        this.progressBar.start(numProbes, 0);
+        // return
+        return this.progressBar;
+    }
+    // ---------------------------------------------------------------------------------
+    startDownloadBars() {
         // create new container for progress bars
         this.progressBars = new progress.MultiBar({
             format: `${ chalk.rgb(...CLI_SAVE_COLOR)(`{bar}`) } | {percentage}% | ${ chalk.rgb(...CLI_PROBE_COLOR)(`{file}`) }`,
             // format: `${ chalk.rgb(...CLI_SAVE_COLOR)(`{bar}`) } | ${ chalk.rgb(...CLI_PROBE_COLOR)(`{file}`) } | {value}/{total} s`,
             stream: process.stdout,
-            stopOnComplete: false,
-            clearOnComplete: false,
+            stopOnComplete: true,
+            clearOnComplete: true,
             barsize: 80,
             barCompleteChar: `\u2588`,
             barIncompleteChar: `\u2591`,
@@ -167,13 +187,13 @@ class output {
         });
     }
     // ---------------------------------------------------------------------------------
-    bar(total, file) {
+    downloadBar(total, file) {
         // create a new progress bar
         return this.progressBars
             .create(total, 0, {file: file});
     }
     // ---------------------------------------------------------------------------------
-    barstop() {
+    stopAllDownloadBars() {
         // stop all progress bars
         return this.progressBars.stop();
     }
@@ -194,14 +214,14 @@ class logger {
         }
     }
     // ---------------------------------------------------------------------------------
-    log(data) {
+    writeLog(data) {
         if (this.logWritable)
             // write to file
             return this.logWritable.write(`${ String(data) }\n`);
         return null;
     }
     // ---------------------------------------------------------------------------------
-    done(finalWrite, cbEnd) {
+    closeLog(finalWrite, cbEnd) {
         if (this.logWritable)
             // signal EOF (note that cbEnd can be undefined...)
             return this.logWritable.end(finalWrite, cbEnd);
@@ -211,7 +231,7 @@ class logger {
         return null;
     }
     // ---------------------------------------------------------------------------------
-    finished() {
+    writesCompleted() {
         if (this.logWritable)
             // writes completed
             return new Promise(resolve => {
@@ -222,4 +242,4 @@ class logger {
     // ---------------------------------------------------------------------------------
 }
 
-module.exports = {output, logger, grabber, extractUrls};
+module.exports = {extractUrls, grabber, output, logger};

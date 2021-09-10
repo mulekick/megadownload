@@ -1,9 +1,9 @@
 'use strict';
 
 class resolver {
-    constructor({url = null, fetched = null, probed = null, errmsg = null, mediaLocation = null, locationReferer = null, contentType = null, contentLength = null, contentRange = null, contentEncoding = null, metadata = null} = {}) {
+    constructor({url = null, fetched = null, probed = null, errmsg = null, mediaLocation = null, locationReferer = null, metadata = null} = {}) {
         // eslint-disable-next-line object-curly-newline
-        Object.assign(this, {url, fetched, probed, errmsg, mediaLocation, locationReferer, contentType, contentLength, contentRange, contentEncoding, metadata});
+        Object.assign(this, {url, fetched, probed, errmsg, mediaLocation, locationReferer, metadata});
     }
 }
 
@@ -16,7 +16,7 @@ const
     // Config module
     {odoklassnikiHeaderbandAid, USER_AGENT, REFERER_RGX} = require(`./config`),
     // ---------------------------------------------------------------------------------
-    probeMedia = url =>
+    probeMedia = (url, bar) =>
         // eslint-disable-next-line implicit-arrow-linebreak
         new Promise(resolve => {
             const
@@ -27,7 +27,8 @@ const
                 readbl = new FetchStream(url, {
                     headers: {
                         Connection: `keep-alive`,
-                        Referer: `${ referer }`,
+                        // The cons of using the referer header outweigh the pros at the moment, so it will be disabled until further notice ...
+                        // Referer: `${ referer }`,
                         'User-Agent': USER_AGENT
                     }
                 });
@@ -42,10 +43,12 @@ const
                             // content type (odoklassniki/soundcloud band-aid lol)
                             contentType = odoklassnikiHeaderbandAid(responseHeaders[`content-type`]),
                             // probe media source ...
-                            launchProbe = (origUrl, resolvedUrl, resolvedType, resolvedHeaders) => {
+                            launchProbe = (origUrl, resolvedUrl, progBar) => {
                                 ffmpeg
                                     // probe input (provide input options as second argument)
-                                    .ffprobe(resolvedUrl, [ `-user_agent`, `'${ USER_AGENT }'`, `-headers`, `'Referer: ${ referer }'` ], (err, metaprobe) => {
+                                    // The cons of using the referer header outweigh the pros at the moment, so it will be disabled until further notice ...
+                                    // .ffprobe(resolvedUrl, [ `-user_agent`, `'${ USER_AGENT }'`, `-headers`, `'Referer: ${ referer }'` ], (err, metaprobe) => {
+                                    .ffprobe(resolvedUrl, [ `-user_agent`, `'${ USER_AGENT }'` ], (err, metaprobe) => {
                                         if (err) {
                                             // reject
                                             resolve(new resolver({url: origUrl, fetched: true, probed: false, errmsg: `failed to probe: ${ err[`message`] }`}));
@@ -62,18 +65,12 @@ const
                                                 mediaLocation: resolvedUrl,
                                                 // referer for the url
                                                 locationReferer: referer,
-                                                // resource type
-                                                contentType: resolvedType,
-                                                // resource size
-                                                contentLength: resolvedHeaders[`content-length`],
-                                                // resource bytes range
-                                                contentRange: resolvedHeaders[`content-range`],
-                                                // encoding
-                                                contentEncoding: resolvedHeaders[`content-encoding`],
                                                 // probe metadata
                                                 metadata: metaprobe
                                             }));
                                         }
+                                        // increment progress bar
+                                        progBar.increment();
                                     });
                             };
                         // fetch fails if content type is not retrieved/evaluates to false ...
@@ -96,9 +93,11 @@ const
                                             if (err) {
                                                 // reject
                                                 resolve(new resolver({url: url, fetched: false, probed: false, errmsg: err[`message`]}));
+                                                // increment progress bar
+                                                bar.increment();
                                             } else {
                                                 // launch probe on url
-                                                launchProbe(url, meta[`finalUrl`], odoklassnikiHeaderbandAid(meta[`responseHeaders`][`content-type`]), meta[`responseHeaders`]);
+                                                launchProbe(url, meta[`finalUrl`], bar);
                                             }
                                         });
                                     });
@@ -106,21 +105,30 @@ const
                                 // ditch data
                                 readbl.resume();
                                 // launch probe on resolved url
-                                launchProbe(url, finalUrl, contentType, responseHeaders);
+                                launchProbe(url, finalUrl, bar);
                             }
                         } else {
                             // ditch data
                             readbl.resume();
                             // reject
                             resolve(new resolver({url: url, fetched: true, probed: false, errmsg: `failed to retrieve content type`}));
+                            // increment progress bar
+                            bar.increment();
                         }
                     // server refuses request
                     } else {
                         // no http readable retrieved, reject
                         resolve(new resolver({url: url, fetched: false, probed: false, errmsg: `failed to retrieve response headers: remote server returned code ${ metafetch[`status`] }`}));
+                        // increment progress bar
+                        bar.increment();
                     }
                 })
-                .on(`error`, err => resolve(new resolver({url: url, fetched: false, probed: false, errmsg: err[`message`]})));
+                .on(`error`, err => {
+                    // reject
+                    resolve(new resolver({url: url, fetched: false, probed: false, errmsg: err[`message`]}));
+                    // increment progress bar
+                    bar.increment();
+                });
         });
 
 module.exports = {probeMedia};

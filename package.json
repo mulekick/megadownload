@@ -9,7 +9,6 @@
     "commander": "^8.1.0",
     "fetch": "^1.1.0",
     "fluent-ffmpeg": "^2.1.2",
-    "mime-types": "^2.1.32",
     "unique-names-generator": "^4.6.0"
   },
   "engines": {

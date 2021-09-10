@@ -12,14 +12,13 @@ const
     // load modules
     {createInterface} = require(`readline`),
     {rm} = require(`fs`),
-    {extension} = require(`mime-types`),
     {uniqueNamesGenerator, adjectives, colors, languages, starWars} = require(`unique-names-generator`),
     {probeMedia} = require(`./probe-media`),
-    {fetchMedia} = require(`./fetch-media`),
-    {output, logger, extractUrls} = require(`./utils`),
+    {pullMedia} = require(`./pull-media`),
+    {extractUrls, output, logger} = require(`./utils`),
     // ---------------------------------------------------------------------------------
     // Config module
-    {vimeoUrlBandAid, removeRangeBandAid, MEDIA_FORMATS, VIDEO_FORMAT_BY_MIME_TYPE, AUDIO_FORMAT_BY_MIME_TYPE} = require(`./config`),
+    {vimeoUrlBandAid, removeRangeBandAid, MEDIA_FORMATS, VIDEO_CODEC_FILE_EXT, AUDIO_CODEC_FILE_EXT} = require(`./config`),
     // ---------------------------------------------------------------------------------
     // user confirmation
     confirmFetch = m => new Promise((resolve, reject) => {
@@ -32,9 +31,11 @@ const
     }),
     // ---------------------------------------------------------------------------------
     // program options
-    processInputs = async({inputFiles, outputDir, minDuration, minStreams, audioOnly, verbose, logFile}) => {
+    processInputs = async({inputFiles, outputDir, minDuration, minStreams, audioOnly, dumpUrls, verbose, logFile}) => {
 
         const
+            // ---------------------------------------------------------------------------------
+
             // ---------------------------------------------------------------------------------
             // file system log
             pLog = new logger({
@@ -85,7 +86,29 @@ const
                             .join(`\n`);
 
             // output
-            pLog.log(eventLog);
+            pLog.writeLog(eventLog);
+
+            if (dumpUrls) {
+
+                // turn logger off
+                pLog.closeLog();
+
+                // wait for the logger to complete the writes ...
+                await pLog.writesCompleted();
+
+                // output eventlog
+                process.stdout.write(`${ eventLog }\n`);
+
+                // return success code
+                process.exit(0);
+
+            }
+
+            process.stdout.write(`probing the internet for media, please wait...\n`);
+
+            const
+                // init probes progress bar
+                probeBar = pOut.startProbeBar(resultsArray.length);
 
             // init array for asynchronous functions processing
             promisesArray = [];
@@ -93,7 +116,7 @@ const
             // for each file to process
             for (let counter = 0; counter < resultsArray.length; counter++)
                 // start async function immediately
-                promisesArray.push(probeMedia(resultsArray[counter]));
+                promisesArray.push(probeMedia(resultsArray[counter], probeBar));
 
             // await the resolution of all promises
             resultsArray = await Promise.all(promisesArray);
@@ -140,7 +163,7 @@ const
                             .join(`\n`);
 
             // output
-            pLog.log(eventLog);
+            pLog.writeLog(eventLog);
 
             // media will be uniquely identified by their duration in seconds
             // we will virtually demux here by spreading the contents of metadata[`streams`]
@@ -149,7 +172,7 @@ const
                 .reduce((r, x) => {
                     const
                         // extract url and duration
-                        {mediaLocation, locationReferer, contentType, contentLength, contentRange, metadata: {format: {duration}, streams}} = x;
+                        {mediaLocation, locationReferer, metadata: {format: {duration}, streams}} = x;
                     // add properties, spread, push in accumulator
                     r.push(...streams
                         // reminder: target object comes first ...
@@ -161,30 +184,25 @@ const
                             _mediaLocation: removeRangeBandAid(mediaLocation),
                             // save referer
                             _mediaReferer: locationReferer,
-                            // save file extension
-                            _mediaMimeType: extension(contentType),
-                            // save length
-                            _mediaByteLength: contentLength,
-                            // save range
-                            _mediaByteRange: contentRange,
                             // round stream durations
-                            _duration: Math.ceil(Number(duration))
+                            _mediaDuration: Math.ceil(Number(duration))
                         }, stream)));
                     // return
                     return r;
                 }, [])
                 // sort by duration
-                .sort((a, b) => b[`_duration`] - a[`_duration`]);
+                .sort((a, b) => b[`_mediaDuration`] - a[`_mediaDuration`]);
 
             while (resultsArray[0]) {
 
                 const
                     // current media duration
-                    duration = resultsArray[0][`_duration`],
+                    duration = resultsArray[0][`_mediaDuration`],
 
                     // next media start index
-                    // nextMediaIndex = resultsArray.findIndex(x => x[`_duration`] !== duration),
-                    nextMediaIndex = audioOnly ? resultsArray.findIndex(x => x[`_duration`] !== duration) : resultsArray.findIndex(x => Math.abs(x[`_duration`] - duration) > 1),
+                    nextMediaIndex = resultsArray.findIndex(x => Math.abs(x[`_mediaDuration`] - duration) > 1),
+                    // nextMediaIndex = resultsArray.findIndex(x => x[`_mediaDuration`] !== duration),
+                    // nextMediaIndex = audioOnly ? resultsArray.findIndex(x => x[`_mediaDuration`] !== duration) : resultsArray.findIndex(x => Math.abs(x[`_mediaDuration`] - duration) > 1),
 
                     // isolate media
                     mediaStreams = resultsArray.splice(0, nextMediaIndex === -1 ? resultsArray.length : nextMediaIndex),
@@ -207,13 +225,20 @@ const
                     // eslint-disable-next-line no-confusing-arrow
                     .sort((a, b) => a[`sample_rate`] && b[`sample_rate`] ? b[`sample_rate`] - a[`sample_rate`] : a[`sample_rate`] ? -1 : b[`sample_rate`] ? 1 : 0)[0];
 
+                // audio stream options
+                audOpts = [ `-c:a:0 copy`, `-strict experimental` ];
+
                 if (audioOnly) {
 
                     // mapping options, audio only
                     mapOpts = [ `-map 0:${ audStr[`index`] }` ];
 
-                    // save format ...
-                    fformat = AUDIO_FORMAT_BY_MIME_TYPE[audStr[`_mediaMimeType`]];
+                    if (audStr[`codec_long_name`] in AUDIO_CODEC_FILE_EXT)
+                        // save format ...
+                        fformat = AUDIO_CODEC_FILE_EXT[audStr[`codec_long_name`]];
+                    else
+                        // throw error if extension is missing
+                        throw new Error(`save file extension is not configured for audio codec ${ audStr[`codec_long_name`] }, aborting process.`);
 
                 } else {
 
@@ -229,13 +254,16 @@ const
 
                     // mapping options, audio then video
                     mapOpts = [ `-map 0:${ audStr[`index`] }`, `-map 1:${ vidStr[`index`] }` ];
-                    // audio stream options, copy if same file format as video stream (except for webm/weba) ...
-                    audOpts = audStr[`_mediaMimeType`] === vidStr[`_mediaMimeType`] ? [ `-c:a:0 copy` ] : audStr[`_mediaMimeType`] === `weba` && vidStr[`_mediaMimeType`] === `webm` ? [ `-c:a:0 copy` ] : [];
+
                     // video stream options, always copy
                     vidOpts = [ `-c:v:0 copy` ];
 
-                    // save format ...
-                    fformat = VIDEO_FORMAT_BY_MIME_TYPE[vidStr[`_mediaMimeType`]];
+                    if (vidStr[`codec_long_name`] in VIDEO_CODEC_FILE_EXT)
+                        // save format ...
+                        fformat = VIDEO_CODEC_FILE_EXT[vidStr[`codec_long_name`]];
+                    else
+                        // throw error if extension is missing
+                        throw new Error(`save file extension is not configured for video codec ${ vidStr[`codec_long_name`] }, aborting process.`);
 
                 }
 
@@ -265,17 +293,17 @@ const
                             .join(`\n`);
 
             // output
-            pLog.log(eventLog);
+            pLog.writeLog(eventLog);
 
             // wait for user confirmation
             await confirmFetch(eventLog);
 
             // hold the line
             // eslint-disable-next-line no-unreachable
-            process.stdout.write(`\nprocessing, please wait ...`);
+            process.stdout.write(`\npulling media from the internet, please wait ...`);
 
             // start progress bars
-            pOut.barstart();
+            pOut.startDownloadBars();
 
             // empty promises array
             promisesArray = [];
@@ -284,17 +312,17 @@ const
             for (let counter = 0; counter < successfulProbes.length; counter++) {
                 // assign progress bar to probe
                 Object.assign(successfulProbes[counter], {
-                    bar: pOut.bar(audioOnly ? successfulProbes[counter][`audio`][`_duration`] : successfulProbes[counter][`video`][`_duration`], successfulProbes[counter][`referer`])
+                    bar: pOut.downloadBar(audioOnly ? successfulProbes[counter][`audio`][`_mediaDuration`] : successfulProbes[counter][`video`][`_mediaDuration`], successfulProbes[counter][`referer`])
                 });
                 // start async function immediately
-                promisesArray.push(fetchMedia(successfulProbes[counter], audioOnly, verbose));
+                promisesArray.push(pullMedia(successfulProbes[counter], audioOnly, verbose));
             }
 
             // await the resolution of all promises
             resultsArray = await Promise.all(promisesArray);
 
             // stop progress bars
-            pOut.barstop();
+            pOut.stopAllDownloadBars();
 
             // log successful fetches
             eventLog = `\n---------------------------------` +
@@ -303,13 +331,13 @@ const
                         `\ndownloads completed.`;
 
             // output
-            pLog.log(eventLog);
+            pLog.writeLog(eventLog);
 
             // all logging is done
-            pLog.done();
+            pLog.closeLog();
 
             // wait for the logger to complete the writes ...
-            await pLog.finished();
+            await pLog.writesCompleted();
 
             process.stdout.write(`\n---------------------------------`);
             process.stdout.write(`\ndone.`);
@@ -325,13 +353,13 @@ const
             process.stderr.write(`\n`);
 
             // output
-            pLog.log(err.message);
+            pLog.writeLog(err.message);
 
             // all loging is done
-            pLog.done();
+            pLog.closeLog();
 
             // wait for the logger to complete the writes ...
-            await pLog.finished();
+            await pLog.writesCompleted();
 
             // return error code
             process.exit(1);

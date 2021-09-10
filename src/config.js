@@ -46,22 +46,16 @@ const
         // media formats (consider the probe a success if ffprobe returns those formats)
         MEDIA_FORMATS: [ `Apple HTTP Live Streaming`, `QuickTime / MOV`, `Matroska / WebM` ],
 
-        // file extensions (after retrieving mime extension, save file as ...)
-        VIDEO_FORMAT_BY_MIME_TYPE: {
-            [`mp4`]: `mp4`,
-            [`webm`]: `webm`,
-            [`m3u8`]: `mp4`,
-            [`ts`]: `mp4`
+        // file extensions by encoder name (all support the -c copy option on ffmpeg) ...
+        VIDEO_CODEC_FILE_EXT: {
+            [`H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10`]: `mp4`,
+            [`Alliance for Open Media AV1`]: `mp4`,
+            [`Google VP9`]: `webm`
         },
-
         // audio only
-        AUDIO_FORMAT_BY_MIME_TYPE: {
-            [`mp4`]: `mp3`,
-            [`webm`]: `mp3`,
-            [`weba`]: `mp3`,
-            [`m3u8`]: `mp3`,
-            [`m4a`]: `mp3`,
-            [`ts`]: `mp3`
+        AUDIO_CODEC_FILE_EXT: {
+            [`AAC (Advanced Audio Coding)`]: `adts`,
+            [`Opus (Opus Interactive Audio Codec)`]: `opus`
         },
 
         // default process log file

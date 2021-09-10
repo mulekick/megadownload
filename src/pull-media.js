@@ -18,7 +18,7 @@ const
     // Config module
     {USER_AGENT, EVENT_RGX} = require(`./config`),
     // ---------------------------------------------------------------------------------
-    fetchMedia = (media, audioOnly, verbose) =>
+    pullMedia = (media, audioOnly, verbose) =>
         // eslint-disable-next-line implicit-arrow-linebreak
         new Promise(resolve => {
             const
@@ -39,12 +39,16 @@ const
                 // output format is mandatory for the wrapper, can't set it through the options
                 ffcmd = ffmpeg()
                     .input(audio[`_mediaLocation`])
-                    .inputOptions([ `-user_agent`, `'${ USER_AGENT }'`/* , `-headers`, `'Referer: ${ referer }'`*/ ]);
+                    // The cons of using the referer header outweigh the pros at the moment, so it will be disabled until further notice ...
+                    // .inputOptions([ `-user_agent`, `'${ USER_AGENT }'`/* , `-headers`, `'Referer: ${ referer }'`*/ ]);
+                    .inputOptions([ `-user_agent`, `'${ USER_AGENT }'` ]);
 
             if (audioOnly === false)
                 ffcmd
                     .input(video[`_mediaLocation`])
-                    .inputOptions([ `-user_agent`, `'${ USER_AGENT }'`/* , `-headers`, `'Referer: ${ referer }'`*/ ]);
+                    // The cons of using the referer header outweigh the pros at the moment, so it will be disabled until further notice ...
+                    // .inputOptions([ `-user_agent`, `'${ USER_AGENT }'`/* , `-headers`, `'Referer: ${ referer }'`*/ ]);
+                    .inputOptions([ `-user_agent`, `'${ USER_AGENT }'` ]);
 
             ffcmd
                 .outputOptions(options)
@@ -53,9 +57,9 @@ const
             // set event listeners for command
             ffcmd
                 // CLI command output
-                .on(`start`, cmd => tLog.log(`\nffmpeg spawned:\n${ cmd }`))
+                .on(`start`, cmd => tLog.writeLog(`\nffmpeg spawned:\n${ cmd }`))
                 // input codec data
-                .on(`codecData`, o => tLog.log(`\ninput codec data: ${ JSON.stringify(o) }`))
+                .on(`codecData`, o => tLog.writeLog(`\ninput codec data: ${ JSON.stringify(o) }`))
                 // transcoding events
                 .on(`stderr`, msg => {
                     const
@@ -70,15 +74,15 @@ const
                         bar.update(s + m * 6e1 + h * 3.6e3);
                     }
                     // log
-                    tLog.log(`${ msg }`);
+                    tLog.writeLog(`${ msg }`);
                 })
                 // transcoding done
                 .on(`end`, () => {
                     // update and stop progress bar
-                    bar.update(audioOnly ? audio[`_duration`] : video[`_duration`]);
+                    bar.update(audioOnly ? audio[`_mediaDuration`] : video[`_mediaDuration`]);
                     bar.stop();
                     // ensure all writes to log file are completed
-                    tLog.done(`\ntranscoding succeeded.`, () => {
+                    tLog.closeLog(`\ntranscoding succeeded.`, () => {
                         resolve(new resolver({audioSrc: audio[`_mediaLocation`], videoSrc: audioOnly ? null : video[`_mediaLocation`], transcodeSuccessful: true, savedFile: target, logFile: logfileName}));
                     });
                 })
@@ -86,7 +90,7 @@ const
                 .on(`error`, err => rm(target, {force: true}, () => {
                     // ensure all writes to log file are completed
                     // eslint-disable-next-line max-nested-callbacks
-                    tLog.done(`\ntranscoding error occured: ${ err[`message`] }`, () => {
+                    tLog.closeLog(`\ntranscoding error occured: ${ err[`message`] }`, () => {
                         resolve(new resolver({audioSrc: audio[`_mediaLocation`], videoSrc: audioOnly ? null : video[`_mediaLocation`], transcodeSuccessful: false, errmsg: err[`message`], logFile: logfileName}));
                     });
                 }));
@@ -96,4 +100,4 @@ const
                 .run();
         });
 
-module.exports = {fetchMedia};
+module.exports = {pullMedia};
