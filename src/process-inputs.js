@@ -1,3 +1,5 @@
+/* eslint-disable no-confusing-arrow */
+/* eslint-disable prefer-template */
 'use strict';
 
 class probedMedia {
@@ -26,16 +28,14 @@ const
             input: process.stdin,
             output: process.stdout
         })
-            // eslint-disable-next-line no-confusing-arrow
-            .question(`${ m }Do you want to fetch the above media (Y/n) ?\n`, ans => ans === `Y` ? resolve() : reject(new Error(`fetch aborted.`)));
+            .question(`${ m }Do you want to pull the above media to your hard drive ? (Y/n) ?\n`, ans => ans === `Y` ? resolve() : reject(new Error(`operation canceled.`)));
     }),
     // ---------------------------------------------------------------------------------
     // program options
+    // eslint-disable-next-line complexity
     processInputs = async({inputFiles, outputDir, minDuration, minStreams, audioOnly, dumpUrls, verbose, logFile}) => {
 
         const
-            // ---------------------------------------------------------------------------------
-
             // ---------------------------------------------------------------------------------
             // file system log
             pLog = new logger({
@@ -78,7 +78,6 @@ const
                 .sort();
 
             // log urls to process
-            // eslint-disable-next-line prefer-template
             eventLog = `---------------------------------\n` +
                         `TOTAL URLS : ${ resultsArray.length }\n` +
                         `---------------------------------\n` +
@@ -104,6 +103,7 @@ const
 
             }
 
+            process.stdout.write(`---------------------------------\n`);
             process.stdout.write(`probing the internet for media, please wait...\n`);
 
             const
@@ -123,25 +123,29 @@ const
 
             const
                 // logs
-                [ failedFetches, failedProbes ] = [ [], [] ];
+                [ failedFetches, failedProbes, invalidProbes ] = [ [], [], [] ];
 
             // filter failed fetchings and default options
             resultsArray = resultsArray
                 .filter(x => {
                     switch (true) {
                     case !x[`fetched`] :
-                        failedFetches.push(x);
+                        failedFetches.push(`${ x[`url`] }\n${ x[`errmsg`] }\n`);
                         return false;
                     case !x[`probed`] :
-                        failedProbes.push(x);
+                        failedProbes.push(`${ x[`url`] }\n${ x[`errmsg`] }\n`);
                         return false;
                     case x[`metadata`][`format`][`duration`] === `N/A` :
+                        invalidProbes.push(`${ x[`url`] }\ninvalid probe: unknown media duration\n`);
                         return false;
                     case Number(x[`metadata`][`format`][`duration`]) < minDuration :
+                        invalidProbes.push(`${ x[`url`] }\ninvalid probe: media duration is only ${ x[`metadata`][`format`][`duration`] } seconds\n`);
                         return false;
                     case Number(x[`metadata`][`format`][`nb_streams`]) < minStreams :
+                        invalidProbes.push(`${ x[`url`] }\ninvalid probe: media only contains ${ x[`metadata`][`format`][`nb_streams`] } streams\n`);
                         return false;
                     case !MEDIA_FORMATS.includes(x[`metadata`][`format`][`format_long_name`]) :
+                        invalidProbes.push(`${ x[`url`] }\ninvalid probe: media format/mime type is ${ x[`metadata`][`format`][`format_long_name`] }\n`);
                         return false;
                     default :
                         return true;
@@ -150,22 +154,23 @@ const
 
 
             // log failed fetches and probes
-            // eslint-disable-next-line prefer-template
             eventLog = `---------------------------------\n` +
                         `FAILED FETCHES : ${ failedFetches.length }\n` +
                         failedFetches
-                            .map(x => `${ x[`url`] }\n${ x[`errmsg`] }\n`)
                             .join(`\n`) +
                         `---------------------------------\n` +
                         `FAILED PROBES : ${ failedProbes.length }\n` +
                         failedProbes
-                            .map(x => `${ x[`url`] }\n${ x[`errmsg`] }\n`)
+                            .join(`\n`) +
+                        `---------------------------------\n` +
+                        `INVALID PROBES : ${ invalidProbes.length }\n` +
+                        invalidProbes
                             .join(`\n`);
 
             // output
             pLog.writeLog(eventLog);
 
-            // media will be uniquely identified by their duration in seconds
+            // media will be uniquely identified by referer and duration in seconds
             // we will virtually demux here by spreading the contents of metadata[`streams`]
             // then sort by duration, and let ffmpeg mux back the streams at a later stage
             resultsArray = resultsArray
@@ -190,22 +195,53 @@ const
                     // return
                     return r;
                 }, [])
-                // sort by duration
-                .sort((a, b) => b[`_mediaDuration`] - a[`_mediaDuration`]);
+                // sort by referer
+                .sort((a, b) => b[`_mediaReferer`] - a[`_mediaReferer`]);
+
+
+            let
+                // opting for a quadratic sorting in order to extract more media
+                // streams will be ordered by referer, and then by duration
+                // note : network latency will make time complexity irrelevant ...
+                streamz = [];
 
             while (resultsArray[0]) {
+                const
+                    // current media referer
+                    referer = resultsArray[0][`_mediaReferer`],
+
+                    // next referer start index
+                    nextRefererIndex = resultsArray.findIndex(x => x[`_mediaReferer`] !== referer),
+
+                    referredStreams = resultsArray
+                        // isolate current source streams
+                        .splice(0, nextRefererIndex === -1 ? resultsArray.length : nextRefererIndex)
+                        // sort by media duration (always known)
+                        .sort((a, b) => b[`_mediaDuration`] - a[`_mediaDuration`]);
+
+                // spread and push into streams ...
+                streamz.push(...referredStreams);
+            }
+
+            if (audioOnly)
+                streamz = streamz.filter(x => x[`codec_type`] === `audio`);
+
+            // and isolate individual media
+            while (streamz[0]) {
 
                 const
-                    // current media duration
-                    duration = resultsArray[0][`_mediaDuration`],
+                    // current media referer and duration
+                    {_mediaReferer, _mediaDuration} = streamz[0],
 
                     // next media start index
-                    nextMediaIndex = resultsArray.findIndex(x => Math.abs(x[`_mediaDuration`] - duration) > 1),
-                    // nextMediaIndex = resultsArray.findIndex(x => x[`_mediaDuration`] !== duration),
-                    // nextMediaIndex = audioOnly ? resultsArray.findIndex(x => x[`_mediaDuration`] !== duration) : resultsArray.findIndex(x => Math.abs(x[`_mediaDuration`] - duration) > 1),
+                    // nextMediaIndex = streamz.findIndex(x => x[`_mediaReferer`] !== _mediaReferer || x[`_mediaDuration`] !== _mediaDuration),
+                    // nextMediaIndex = streamz.findIndex(x => x[`_mediaReferer`] !== _mediaReferer || Math.abs(x[`_mediaDuration`] - _mediaDuration) > 1),
+                    nextMediaIndex = audioOnly ?
+                        streamz.findIndex(x => x[`_mediaReferer`] !== _mediaReferer || x[`_mediaDuration`] !== _mediaDuration) :
+                        streamz.findIndex(x => x[`_mediaReferer`] !== _mediaReferer || Math.abs(x[`_mediaDuration`] - _mediaDuration) > 1),
 
                     // isolate media
-                    mediaStreams = resultsArray.splice(0, nextMediaIndex === -1 ? resultsArray.length : nextMediaIndex),
+                    mediaStreams = streamz.splice(0, nextMediaIndex === -1 ? streamz.length : nextMediaIndex),
 
                     // generate random name
                     fname = uniqueNamesGenerator({
@@ -215,6 +251,20 @@ const
                         length: 4
                     });
 
+                // log media streams
+                eventLog = `---------------------------------\n` +
+                            `CURRENT MEDIA STREAMS : ${ mediaStreams.length }\n` +
+                            mediaStreams
+                                .map(x => `source: ${ x[`_mediaReferer`] }, ` +
+                                          `duration: ${ x[`_mediaDuration`] }s, ` +
+                                          `codec type: ${ x[`codec_type`] }, ${ x[`codec_type`] === `video` ? `frame size: ${ x[`width`] } x ${ x[`height`] }` : x[`codec_type`] === `audio` ? `sample rate: ${ x[`sample_rate`] }` : `unknown codec type` }, ` +
+                                          `bit rate: ${ x[`bit_rate`] }, ` +
+                                          `stream duration: ${ x[`duration`] }s`)
+                                .join(`\n`);
+
+                // output
+                pLog.writeLog(eventLog);
+
                 let
                     // init streams and options
                     [ vidStr, audStr, mapOpts, audOpts, vidOpts, fformat ] = [ null, null, [], [], [], null ];
@@ -222,8 +272,22 @@ const
                 // isolate audio stream
                 audStr = mediaStreams
                     // sort streams by highest bitrate
-                    // eslint-disable-next-line no-confusing-arrow
-                    .sort((a, b) => a[`sample_rate`] && b[`sample_rate`] ? b[`sample_rate`] - a[`sample_rate`] : a[`sample_rate`] ? -1 : b[`sample_rate`] ? 1 : 0)[0];
+                    .sort((a, b) => {
+                        // if both values are known
+                        if (isNaN(a[`sample_rate`]) === false && isNaN(b[`sample_rate`]) === false)
+                            // sort highest value first
+                            return b[`sample_rate`] - a[`sample_rate`];
+                        // value unknown for b
+                        else if (isNaN(b[`sample_rate`]))
+                            // sort a first
+                            return -1;
+                        // value unknown for a
+                        else if (isNaN(a[`sample_rate`]))
+                            // sort b first
+                            return 1;
+                        // both values unknown, keep a and b as is
+                        return 0;
+                    })[0];
 
                 // audio stream options
                 audOpts = [ `-c:a:0 copy`, `-strict experimental` ];
@@ -245,12 +309,26 @@ const
                     // isolate video stream
                     vidStr = mediaStreams
                         // sort streams by height
-                        // eslint-disable-next-line no-confusing-arrow
-                        .sort((a, b) => a[`height`] && b[`height`] ? b[`height`] - a[`height`] : a[`height`] ? -1 : b[`height`] ? 1 : 0)[0];
+                        .sort((a, b) => {
+                            // if both values are known
+                            if (isNaN(a[`height`]) === false && isNaN(b[`height`]) === false)
+                                // sort highest value first
+                                return b[`height`] - a[`height`];
+                            // value unknown for b
+                            else if (isNaN(b[`height`]))
+                                // sort a first
+                                return -1;
+                            // value unknown for a
+                            else if (isNaN(a[`height`]))
+                                // sort b first
+                                return 1;
+                            // both values unknown, keep a and b as is
+                            return 0;
+                        })[0];
 
                     // check that audio and video streams are present for current media, throw error if not
                     if (vidStr[`codec_type`] !== `video` || audStr[`codec_type`] !== `audio`)
-                        throw new Error(`audio: ${ audStr[`_mediaLocation`] }\nvideo: ${ vidStr[`_mediaLocation`] }\ncurrent media contains invalid streams, aborting process.`);
+                        throw new Error(`\naudio: ${ audStr[`_mediaLocation`] }\nvideo: ${ vidStr[`_mediaLocation`] }\ncurrent media contains invalid streams, aborting process.`);
 
                     // mapping options, audio then video
                     mapOpts = [ `-map 0:${ audStr[`index`] }`, `-map 1:${ vidStr[`index`] }` ];
@@ -284,7 +362,6 @@ const
                 throw new Error(`no successful probes could be performed on the selected session, exiting.`);
 
             // log successful probes
-            // eslint-disable-next-line prefer-template
             eventLog = `---------------------------------\n` +
                         `SUCCESSFUL PROBES: ${ successfulProbes.length }\n` +
                         `---------------------------------\n` +
@@ -299,7 +376,6 @@ const
             await confirmFetch(eventLog);
 
             // hold the line
-            // eslint-disable-next-line no-unreachable
             process.stdout.write(`\npulling media from the internet, please wait ...`);
 
             // start progress bars
@@ -326,7 +402,9 @@ const
 
             // log successful fetches
             eventLog = `\n---------------------------------` +
-                        `\n${ resultsArray.join(`\n`) }` +
+                        `\n${ resultsArray
+                            .map(x => x[`transcodeSuccessful`] ? x[`savedFile`] : x[`errmsg`])
+                            .join(`\n`) }` +
                         `\n---------------------------------` +
                         `\ndownloads completed.`;
 

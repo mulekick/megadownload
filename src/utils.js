@@ -4,7 +4,6 @@
 const
     // ---------------------------------------------------------------------------------
     // load modules
-    // load modules
     {createInterface} = require(`readline`),
     {createWriteStream, createReadStream} = require(`fs`),
     {program} = require(`commander`),
@@ -128,11 +127,10 @@ class output {
     formatProbe(x, i) {
         // probe formatting
         const
-            // eslint-disable-next-line no-unused-vars
             {referer, audio, video, target} = x;
         // eslint-disable-next-line prefer-template
-        return  chalk.rgb(...CLI_PROBE_COLOR)(`MEDIA ${ i } FROM : ${ referer }\n`) +
-                `---------------------------------\n` +
+        return  chalk.rgb(...CLI_PROBE_COLOR)(`MEDIA ${ i } FROM : ${ referer }`) +
+                `\n---------------------------------\n` +
                 `AUDIO STREAM ${ audio[`index`] }\n` +
                 // `SOURCE : ${ audio[`_mediaLocation`] }\n` +
                 `ENCODING : ${ audio[`codec_long_name`] }\n` +
@@ -149,8 +147,8 @@ class output {
                 `BIT RATE : ${ isNaN(video[`bit_rate`]) ? `N/A` : video[`bit_rate`] / 1000 } kbps\n` +
                 `DURATION : ${ video[`duration`] }\n` +
                 `---------------------------------\n`) +
-                chalk.rgb(...CLI_SAVE_COLOR)(`SAVED AS : ${ target }\n`) +
-                `---------------------------------\n`;
+                chalk.rgb(...CLI_SAVE_COLOR)(`SAVED AS : ${ target }`) +
+                `\n---------------------------------\n`;
     }
 
     // ---------------------------------------------------------------------------------
