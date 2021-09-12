@@ -52,7 +52,7 @@ const
 
             let
                 // variables
-                [ promisesArray, resultsArray, successfulProbes, eventLog ] = [ [], null, [], null ];
+                [ promisesArray, resultsArray, eventLog ] = [ [], null, null ];
 
             // for each file to process
             for (let counter = 0; counter < inputFiles.length; counter++)
@@ -125,7 +125,7 @@ const
 
             const
                 // logs
-                [ failedFetches, failedProbes, invalidProbes ] = [ [], [], [] ];
+                [ failedFetches, failedProbes, invalidProbes, successfulProbes ] = [ [], [], [], [] ];
 
             // filter failed fetchings and default options
             resultsArray = resultsArray
