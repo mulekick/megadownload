@@ -127,9 +127,11 @@ class output {
     formatProbe(x, i) {
         // probe formatting
         const
-            {referer, audio, video, target} = x;
+            {referer, duration, audio, video, target} = x;
         // eslint-disable-next-line prefer-template
         return  chalk.rgb(...CLI_PROBE_COLOR)(`MEDIA ${ i } FROM : ${ referer }`) +
+                `\n---------------------------------\n` +
+                chalk.rgb(...CLI_PROBE_COLOR)(`MEDIA DURATION : ${ duration }s`) +
                 `\n---------------------------------\n` +
                 `AUDIO STREAM ${ audio[`index`] }\n` +
                 // `SOURCE : ${ audio[`_mediaLocation`] }\n` +
@@ -137,7 +139,7 @@ class output {
                 `SAMPLE RATE : ${ isNaN(audio[`sample_rate`]) ? `N/A` : audio[`sample_rate`] / 1000 } kHz\n` +
                 `BIT RATE : ${ isNaN(audio[`bit_rate`]) ? `N/A` : audio[`bit_rate`] / 1000 } kbps\n` +
                 `LAYOUT : ${ audio[`channel_layout`] }\n` +
-                `DURATION : ${ audio[`duration`] }\n` +
+                // `DURATION : ${ audio[`duration`] }s\n` +
                 `---------------------------------\n` +
             (video === null ? `` :
                 `VIDEO STREAM ${ video[`index`] }\n` +
@@ -145,10 +147,10 @@ class output {
                 `ENCODING : ${ video[`codec_long_name`] }\n` +
                 `RESOLUTION : ${ video[`width`] }x${ video[`height`] }\n` +
                 `BIT RATE : ${ isNaN(video[`bit_rate`]) ? `N/A` : video[`bit_rate`] / 1000 } kbps\n` +
-                `DURATION : ${ video[`duration`] }\n` +
+                // `DURATION : ${ video[`duration`] }s\n` +
                 `---------------------------------\n`) +
                 chalk.rgb(...CLI_SAVE_COLOR)(`SAVED AS : ${ target }`) +
-                `\n---------------------------------\n`;
+                `\n---------------------------------`;
     }
 
     // ---------------------------------------------------------------------------------

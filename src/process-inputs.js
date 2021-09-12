@@ -3,9 +3,9 @@
 'use strict';
 
 class probedMedia {
-    constructor({referer = null, audio = null, video = null, target = null, options = null} = {}) {
+    constructor({referer = null, duration = null, audio = null, video = null, target = null, options = null} = {}) {
         // eslint-disable-next-line object-curly-newline
-        Object.assign(this, {referer, audio, video, target, options});
+        Object.assign(this, {referer, duration, audio, video, target, options});
     }
 }
 
@@ -28,7 +28,7 @@ const
             input: process.stdin,
             output: process.stdout
         })
-            .question(`${ m }Do you want to pull the above media to your hard drive ? (Y/n) ?\n`, ans => ans === `Y` ? resolve() : reject(new Error(`operation canceled.`)));
+            .question(`${ m }\nDo you want to pull the above media to your hard drive ? (Y/n) ?\n`, ans => ans === `Y` ? resolve() : reject(new Error(`operation canceled.`)));
     }),
     // ---------------------------------------------------------------------------------
     // program options
@@ -351,6 +351,7 @@ const
                 successfulProbes
                     .push(new probedMedia({
                         referer: audioOnly ? audStr[`_mediaReferer`] : vidStr[`_mediaReferer`],
+                        duration: audioOnly ? audStr[`_mediaDuration`] : vidStr[`_mediaDuration`],
                         audio: audStr,
                         video: vidStr,
                         target: `${ outputDir }/${ fname.replace(/[^A-Za-z0-9]/gu, ``) }.${ fformat }`,
@@ -390,7 +391,7 @@ const
             for (let counter = 0; counter < successfulProbes.length; counter++) {
                 // assign progress bar to probe
                 Object.assign(successfulProbes[counter], {
-                    bar: pOut.downloadBar(audioOnly ? successfulProbes[counter][`audio`][`_mediaDuration`] : successfulProbes[counter][`video`][`_mediaDuration`], successfulProbes[counter][`referer`])
+                    bar: pOut.downloadBar(successfulProbes[counter][`duration`], successfulProbes[counter][`referer`])
                 });
                 // start async function immediately
                 promisesArray.push(pullMedia(successfulProbes[counter], audioOnly, verbose));

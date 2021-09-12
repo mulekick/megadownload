@@ -23,7 +23,7 @@ const
         new Promise(resolve => {
             const
                 // extract referer, streams, target, options and progress bar
-                {referer, audio, video, target, options, bar} = media,
+                {referer, duration, audio, video, target, options, bar} = media,
                 // log file
                 logfileName = `${ target }.log`,
                 // transcoding log
@@ -79,7 +79,7 @@ const
                 // transcoding done
                 .on(`end`, () => {
                     // update and stop progress bar
-                    bar.update(audioOnly ? audio[`_mediaDuration`] : video[`_mediaDuration`]);
+                    bar.update(duration);
                     bar.stop();
                     // ensure all writes to log file are completed
                     tLog.closeLog(`\ntranscoding succeeded.`, () => {
