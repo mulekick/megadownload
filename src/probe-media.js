@@ -14,7 +14,7 @@ const
     ffmpeg = require(`fluent-ffmpeg`),
     // ---------------------------------------------------------------------------------
     // Config module
-    {odoklassnikiHeaderbandAid, USER_AGENT, REFERER_RGX} = require(`./config`),
+    {odoklassnikiHeaderbandAid, removeRangeBandAid, USER_AGENT, REFERER_RGX} = require(`./config`),
     // ---------------------------------------------------------------------------------
     probeMedia = (url, bar) =>
         // eslint-disable-next-line implicit-arrow-linebreak
@@ -96,8 +96,10 @@ const
                                                 // increment progress bar
                                                 bar.increment();
                                             } else {
-                                                // launch probe on url
-                                                launchProbe(url, meta[`finalUrl`], bar);
+                                                // launch probe on resolved url
+                                                // apply range removal band aid
+                                                // because YT adds it a 2nd time ...
+                                                launchProbe(url, removeRangeBandAid(meta[`finalUrl`]), bar);
                                             }
                                         });
                                     });
@@ -105,7 +107,10 @@ const
                                 // ditch data
                                 readbl.resume();
                                 // launch probe on resolved url
-                                launchProbe(url, finalUrl, bar);
+                                // apply range removal band aid
+                                // so ffprobe doesn't throw an
+                                // 'Invalid data found when processing input' error ...
+                                launchProbe(url, removeRangeBandAid(finalUrl), bar);
                             }
                         } else {
                             // ditch data

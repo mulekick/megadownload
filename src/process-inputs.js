@@ -20,7 +20,7 @@ const
     {extractUrls, output, logger} = require(`./utils`),
     // ---------------------------------------------------------------------------------
     // Config module
-    {vimeoUrlBandAid, removeRangeBandAid, MEDIA_FORMATS, VIDEO_CODEC_FILE_EXT, AUDIO_CODEC_FILE_EXT} = require(`./config`),
+    {vimeoUrlBandAid, MEDIA_FORMATS, VIDEO_CODEC_FILE_EXT, AUDIO_CODEC_FILE_EXT} = require(`./config`),
     // ---------------------------------------------------------------------------------
     // user confirmation
     confirmFetch = m => new Promise((resolve, reject) => {
@@ -72,7 +72,9 @@ const
                 }, [])
                 // filter duplicates
                 .filter((x, i, a) => a.indexOf(x) === i)
-                // apply vimeo band aid
+                // apply vimeo band aid so
+                // fetch can resolve the correct file
+                // and feed it to probe afterwards
                 .map(x => vimeoUrlBandAid(x))
                 // sort
                 .sort();
@@ -186,7 +188,7 @@ const
                         // eslint-disable-next-line prefer-object-spread
                         .map(stream => Object.assign({
                             // save url
-                            _mediaLocation: removeRangeBandAid(mediaLocation),
+                            _mediaLocation: mediaLocation,
                             // save referer
                             _mediaReferer: locationReferer,
                             // round stream durations
