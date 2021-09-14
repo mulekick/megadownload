@@ -330,13 +330,14 @@ const
 
                     // check that audio and video streams are present for current media, throw error if not
                     if (vidStr[`codec_type`] !== `video` || audStr[`codec_type`] !== `audio`)
-                        throw new Error(`\naudio: ${ audStr[`_mediaLocation`] }\nvideo: ${ vidStr[`_mediaLocation`] }\ncurrent media contains invalid streams, aborting process.`);
+                        // throw new Error(`\naudio: ${ audStr[`_mediaLocation`] }\nvideo: ${ vidStr[`_mediaLocation`] }\ncurrent media contains invalid streams, aborting process.`);
+                        continue;
 
                     // mapping options, audio then video
                     mapOpts = [ `-map 0:${ audStr[`index`] }`, `-map 1:${ vidStr[`index`] }` ];
 
                     // video stream options, always copy
-                    vidOpts = [ `-c:v:0 copy` ];
+                    vidOpts = [ `-c:v:0 copy`, `-strict experimental` ];
 
                     if (vidStr[`codec_long_name`] in VIDEO_CODEC_FILE_EXT)
                         // save format ...

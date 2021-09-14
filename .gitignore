@@ -6,4 +6,3 @@
 /.vscode/*
 # exclude test files
 /test*
-/grab*
