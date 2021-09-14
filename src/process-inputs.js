@@ -80,7 +80,7 @@ const
                 .sort();
 
             // log urls to process
-            eventLog = `---------------------------------\n` +
+            eventLog =  `---------------------------------\n` +
                         `TOTAL URLS : ${ resultsArray.length }\n` +
                         `---------------------------------\n` +
                         resultsArray
@@ -156,7 +156,7 @@ const
 
 
             // log failed fetches and probes
-            eventLog = `---------------------------------\n` +
+            eventLog =  `---------------------------------\n` +
                         `FAILED FETCHES : ${ failedFetches.length }\n` +
                         failedFetches
                             .join(`\n`) +
@@ -254,7 +254,7 @@ const
                     });
 
                 // log media streams
-                eventLog = `---------------------------------\n` +
+                eventLog =  `---------------------------------\n` +
                             `CURRENT MEDIA STREAMS : ${ mediaStreams.length }\n` +
                             mediaStreams
                                 .map(x => `source: ${ x[`_mediaReferer`] }, ` +
@@ -302,9 +302,15 @@ const
                     if (audStr[`codec_long_name`] in AUDIO_CODEC_FILE_EXT)
                         // save format ...
                         fformat = AUDIO_CODEC_FILE_EXT[audStr[`codec_long_name`]];
-                    else
-                        // throw error if extension is missing
-                        throw new Error(`save file extension is not configured for audio codec ${ audStr[`codec_long_name`] }, aborting process.`);
+                    else {
+                        // log media streams
+                        eventLog =  `\naudio stream codec: ${ audStr[`codec_long_name`] }` +
+                                    `\nsave file extension is not configured for the above codec, current media will be discarded 😭.`;
+                        // output
+                        pLog.writeLog(eventLog);
+                        // proceed to next media
+                        continue;
+                    }
 
                 } else {
 
@@ -329,9 +335,16 @@ const
                         })[0];
 
                     // check that audio and video streams are present for current media, throw error if not
-                    if (vidStr[`codec_type`] !== `video` || audStr[`codec_type`] !== `audio`)
-                        // throw new Error(`\naudio: ${ audStr[`_mediaLocation`] }\nvideo: ${ vidStr[`_mediaLocation`] }\ncurrent media contains invalid streams, aborting process.`);
+                    if (vidStr[`codec_type`] !== `video` || audStr[`codec_type`] !== `audio`) {
+                        // log media streams
+                        eventLog =  `\nselected audio stream: ${ audStr[`_mediaLocation`] }` +
+                                    `\nselected video stream: ${ vidStr[`_mediaLocation`] }` +
+                                    `\ncurrent media contains invalid streams and will be discarded 😭.`;
+                        // output
+                        pLog.writeLog(eventLog);
+                        // proceed to next media
                         continue;
+                    }
 
                     // mapping options, audio then video
                     mapOpts = [ `-map 0:${ audStr[`index`] }`, `-map 1:${ vidStr[`index`] }` ];
@@ -342,9 +355,15 @@ const
                     if (vidStr[`codec_long_name`] in VIDEO_CODEC_FILE_EXT)
                         // save format ...
                         fformat = VIDEO_CODEC_FILE_EXT[vidStr[`codec_long_name`]];
-                    else
-                        // throw error if extension is missing
-                        throw new Error(`save file extension is not configured for video codec ${ vidStr[`codec_long_name`] }, aborting process.`);
+                    else {
+                        // log media streams
+                        eventLog =  `\nvideo stream codec: ${ vidStr[`codec_long_name`] }` +
+                                    `\nsave file extension is not configured for the above codec, current media will be discarded 😭.`;
+                        // output
+                        pLog.writeLog(eventLog);
+                        // proceed to next media
+                        continue;
+                    }
 
                 }
 
@@ -366,7 +385,7 @@ const
                 throw new Error(`no successful probes could be performed on the selected session, exiting.`);
 
             // log successful probes
-            eventLog = `---------------------------------\n` +
+            eventLog =  `---------------------------------\n` +
                         `SUCCESSFUL PROBES: ${ successfulProbes.length }\n` +
                         `---------------------------------\n` +
                         successfulProbes
@@ -405,7 +424,7 @@ const
             pOut.stopAllDownloadBars();
 
             // log successful fetches
-            eventLog = `\n---------------------------------` +
+            eventLog =  `\n---------------------------------` +
                         `\n${ resultsArray
                             .map(x => x[`transcodeSuccessful`] ? x[`savedFile`] : x[`errmsg`])
                             .join(`\n`) }` +
