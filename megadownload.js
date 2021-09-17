@@ -5,20 +5,20 @@
 const
     // ---------------------------------------------------------------------------------
     // load modules
-    {grabber} = require(`./src/utils`),
-    {processInputs} = require(`./src/process-inputs`);
+    {megadownload} = require(`./src/utils`),
+    {processFiles} = require(`./src/process-files`);
     // ---------------------------------------------------------------------------------
 
 try {
 
     const
         // ---------------------------------------------------------------------------------
-        grab = new grabber({input: process.argv}),
-        opts = grab.getOptions();
+        mgdl = new megadownload({input: process.argv}),
+        opts = mgdl.getOptions();
         // ---------------------------------------------------------------------------------
 
     // launch
-    processInputs(opts);
+    processFiles(opts);
 
 } catch (err) {
 

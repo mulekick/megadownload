@@ -82,7 +82,7 @@ const
         });
     // ---------------------------------------------------------------------------------
 
-class grabber {
+class megadownload {
     // ---------------------------------------------------------------------------------
     constructor({input = null, options = null}) {
         // inline caching optimization
@@ -90,7 +90,7 @@ class grabber {
         // double-check input
         if (this.input instanceof Array)
             this.options = program
-                .name(`grab-media`)
+                .name(`megadownload`)
                 // required
                 .requiredOption(`-i, --input-files <inputFiles...>`, `space-separated list of input files (http sessions or HAR files)`)
                 .requiredOption(`-o, --output-dir <outputDir>`, `downloaded files / logs directory path`, validFilePath)
@@ -242,4 +242,4 @@ class logger {
     // ---------------------------------------------------------------------------------
 }
 
-module.exports = {extractUrls, grabber, output, logger};
+module.exports = {extractUrls, megadownload, output, logger};

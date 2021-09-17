@@ -38,7 +38,7 @@ const
         // USER_AGENT: `Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1`,
 
         // min. media duration (seconds)
-        MEDIA_MIN_DURATION: 300,
+        MEDIA_MIN_DURATION: 90,
 
         // min number of streams by media
         MEDIA_MIN_STREAMS: 1,
@@ -55,11 +55,12 @@ const
         // audio only
         AUDIO_CODEC_FILE_EXT: {
             [`AAC (Advanced Audio Coding)`]: `adts`,
-            [`Opus (Opus Interactive Audio Codec)`]: `opus`
+            [`Opus (Opus Interactive Audio Codec)`]: `opus`,
+            [`MP3 (MPEG audio layer 3)`]: `mp3`
         },
 
         // default process log file
-        PROCESS_LOG_FILE: `logs/${ new Date().getTime() }.media.grab.log`,
+        PROCESS_LOG_FILE: `logs/${ new Date().getTime() }.megadownload.log`,
 
         // file path validation
         PATH_RGX: /^\/?(?<path>(?:(?:[^/\s]+|'[^/']+'|"[^/"]+")\/)*)(?<file>[^/\s]+|'[^/']+'|"[^/"]+"){1}$/u,

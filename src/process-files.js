@@ -33,7 +33,7 @@ const
     // ---------------------------------------------------------------------------------
     // program options
     // eslint-disable-next-line complexity
-    processInputs = async({inputFiles, outputDir, minDuration, minStreams, audioOnly, dumpUrls, verbose, logFile}) => {
+    processFiles = async({inputFiles, outputDir, minDuration, minStreams, audioOnly, dumpUrls, verbose, logFile}) => {
 
         const
             // ---------------------------------------------------------------------------------
@@ -469,4 +469,4 @@ const
     };
     // ---------------------------------------------------------------------------------
 
-module.exports = {processInputs};
+module.exports = {processFiles};

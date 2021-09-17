@@ -6,3 +6,5 @@
 /.vscode/*
 # exclude test files
 /test*
+
+/README.*

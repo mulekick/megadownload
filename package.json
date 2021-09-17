@@ -1,7 +1,7 @@
 {
-  "name": "grab-media",
+  "name": "megadownload",
   "version": "1.0.0",
-  "description": "grab online media from urls and save to disk, work in progress",
+  "description": "automatically download video/audio files from your http sessions",
   "scripts": {},
   "dependencies": {
     "chalk": "^4.1.0",
