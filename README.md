@@ -36,14 +36,14 @@ Navigate to your install directory and type :
 2. **Run the program**
    - Open your shell, navigate to your install directory.
    - Type ./megadownload.js -i /path/to/your/http/session/file -o /path/to/your/download/directory.
-   - Review the duration/quality of the media probed from your session file and confirm.
+   - Review the duration/quality of the media probed from your HTTP session file and confirm.
    - Wait for your files to download.
    - Enjoy ad free, network latency free content !
 
 ## Notes
 - Type ./megadownload.js -h to see all available options.
 - Has been extensively tested on [a number of platforms](./platformslist).
-- I routinely use it to download like 40-50 videos at the same time. Don't heasitate to feed it large 150-200 Mb HAR files !
+- I routinely use it to download like 40-50 videos at the same time. Don't hesitate to feed it large 150-200 Mb HAR files !
 - All the successfully probed media from your HTTP session will be downloaded, which means that you'll often end up downloading ads/unwanted content.
 - My approach has been to minimize transcoding operations as much as possible to keep the system resources footprint as light as possible. Don't panic if you end up downloading *.webm, *.opus or *.adts files, your media player WILL be able to play them.
 - This project is of course named after the late [megaupload.com](https://en.wikipedia.org/wiki/Megaupload). Shout out to everyone who was there to witness this glorious slice of internet history !
