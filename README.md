@@ -62,7 +62,7 @@ Navigate to your install directory and type :
    - To counter this, you can always save a .har file after you've opened an URL to a media, then immediately run the program on it.
 
 ## less important notes
-- Dear Github user, [star FFmpeg](https://github.com/FFmpeg/FFmpeg)!
+- Dear Github user, [star FFmpeg](https://github.com/FFmpeg/FFmpeg) !
 - [The HTTP Archive format](https://en.wikipedia.org/wiki/HAR_(file_format))
 - This was extensively tested on [a number of platforms](./platformslist). Though the list of supported platforms may expand in the future, your favorite platforms probably are already supported 😏. 
 - My approach was to minimize transcoding operations in order to keep the system resources footprint as light as possible, thus the "exotic" file formats.
