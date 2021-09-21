@@ -8,13 +8,13 @@
    - Linux distro or WLS2 (debian 10.4.0 recommended)
    - GNU Bash shell (version 5.0.3 recommended)
    - node.js (version 14.17.4 recommended)
-   - Ffmpeg (version  4.1.6-1~deb10u1 recommended)
+   - FFmpeg (version  4.1.6-1~deb10u1 recommended)
    - npm (version 7.20.3 recommended)
    - git (version 2.20.1 recommended)
 
 ## how to install
-Install Ffmpeg first :
-   - [Ffmpeg provides officially supported packages for Debian, Ubuntu, Fedora and Red Hat](https://ffmpeg.org/download.html)
+Install FFmpeg first :
+   - [FFmpeg provides officially supported packages for Debian, Ubuntu, Fedora and Red Hat](https://ffmpeg.org/download.html)
    - To install them, type : sudo apt update && sudo apt install ffmpeg
    - Afterwards, ensure installation succeded by typing : ffmpeg -version
 
@@ -62,6 +62,7 @@ Navigate to your install directory and type :
    - To counter this, you can always save a .har file after you've opened an URL to a media, then immediately run the program on it.
 
 ## less important notes
+- Dear Github user, [Start FFmpeg](https://github.com/FFmpeg/FFmpeg)!
 - [The HTTP Archive format](https://en.wikipedia.org/wiki/HAR_(file_format))
 - This was extensively tested on [a number of platforms](./platformslist). Though the list of supported platforms may expand in the future, your favorite platforms probably are already supported 😏. 
 - My approach was to minimize transcoding operations in order to keep the system resources footprint as light as possible, thus the "exotic" file formats.
