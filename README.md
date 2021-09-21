@@ -23,7 +23,7 @@ Navigate to your install directory and type :
    - cd megadownload
    - npm install
 
-*One major limitation of this utility is that downloaded files are given random names. Once downloads are completed, navigate your history to see which media you've viewed, then copy/paste media titles to the downloaded files. Use durations to match downloaded files with viewed media.*
+*One major limitation of this program is that **_downloaded files are given random names_**. Once downloads are completed, navigate your history to see which media you've viewed, then copy/paste media titles to the downloaded files. Use durations to match downloaded files with viewed media.*
 
 ## how to use
 
@@ -35,16 +35,16 @@ Navigate to your install directory and type :
 
 2. **Run the program**
    - Open your shell, navigate to your install directory.
-   - Type ./megadownload.js -i /path/to/your/http/session/file -o /path/to/your/download/directory.
+   - Type **./megadownload.js -i /path/to/your/http/session/file -o /path/to/your/download/directory**
    - Review the duration/quality of the media probed from your HTTP session file and confirm.
    - Wait for your files to download.
    - Enjoy ad free, network latency free content !
 
 ## some advice
-   - You can provide multiple http session files after the -i option. All will be processed.
-   - Type ./megadownload.js -h to see all available options.
-   - The default minimal media duration is 90 seconds, which means that all media lasting less than 90 seconds will be discarded. You can adjust it with the -d option.
-   - If you want to download audio-only files, use the -a option.
+   - You can provide multiple http session files after the **-i** option. All will be processed.
+   - Type **./megadownload.js -h** to see all available options.
+   - The default minimal media duration is 90 seconds, which means that all media lasting less than 90 seconds will be discarded. You can adjust it with the **-d** option.
+   - If you want to download audio-only files, use the **-a** option.
    - As a bonus, a small script is included that will convert any media to an *.mp3 file. Download music from the platforms and make your own local playlists !
    - To run it, type **. mp3convert.sh /path/to/files/to/convert** (the mp3 files will be saved in the same directory as the source files).
 
@@ -58,10 +58,11 @@ Navigate to your install directory and type :
    - Save the content you want to save and delete the rest (setting up the -d option to the approximate length of what interests you will discard most of the garbage).
    - I routinely use it to download like 40-50 videos at the same time. Don't hesitate to feed it large 150-200 Mb .har files !
    - At the same time, don't go too much above the 50 simultaneous downloads mark or the progress bars may behave unexpectedly and mess up your terminal. Experiment until you find the volume of HAR data you're comfortable using.
-   - If you try to download multiple media with the exact same duration from the same platform, you may sometimes (but rarely) end up with video from a media muxed with the audio of another media.
+   - **If you try to download multiple media with the exact same duration from the same platform, you may sometimes (but rarely) end up with video from a media muxed with the audio of another media.**
    - To counter this, you can always save a .har file after you've opened an URL to a media, then immediately run the program on it.
 
 ## less important notes
+- [The HTTP Archive format](https://en.wikipedia.org/wiki/HAR_(file_format))
 - This was extensively tested on [a number of platforms](./platformslist). Though the list of supported platforms may expand in the future, your favorite platforms probably are already supported 😏. 
 - My approach was to minimize transcoding operations in order to keep the system resources footprint as light as possible, thus the "exotic" file formats.
 - This project is of course named after the late [megaupload.com](https://en.wikipedia.org/wiki/Megaupload). Shout out to everyone who was there to witness this glorious slice of internet history !
