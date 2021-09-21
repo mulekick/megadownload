@@ -425,7 +425,7 @@ const
             // stop progress bars
             pOut.stopAllDownloadBars();
 
-            // log successful fetches
+            // log successful downloads
             eventLog =  `\n---------------------------------` +
                         `\n${ resultsArray
                             .map(x => x[`transcodeSuccessful`] ? x[`savedFile`] : x[`errmsg`])
