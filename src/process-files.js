@@ -12,24 +12,14 @@ class probedMedia {
 const
     // ---------------------------------------------------------------------------------
     // load modules
-    {createInterface} = require(`readline`),
     {rm} = require(`fs`),
     {uniqueNamesGenerator, adjectives, colors, languages, starWars} = require(`unique-names-generator`),
     {probeMedia} = require(`./probe-media`),
     {pullMedia} = require(`./pull-media`),
-    {extractUrls, output, logger} = require(`./utils`),
+    {extractUrls, confirmFetch, createUniqueId, output, logger} = require(`./utils`),
     // ---------------------------------------------------------------------------------
     // Config module
     {vimeoUrlBandAid, MEDIA_FORMATS, VIDEO_CODEC_FILE_EXT, AUDIO_CODEC_FILE_EXT} = require(`./config`),
-    // ---------------------------------------------------------------------------------
-    // user confirmation
-    confirmFetch = m => new Promise((resolve, reject) => {
-        createInterface({
-            input: process.stdin,
-            output: process.stdout
-        })
-            .question(`${ m }\nDo you want to pull the above media to your hard drive ? (Y/n) ?\n`, ans => ans === `Y` ? resolve() : reject(new Error(`operation canceled.`)));
-    }),
     // ---------------------------------------------------------------------------------
     // program options
     // eslint-disable-next-line complexity
@@ -178,6 +168,8 @@ const
             resultsArray = resultsArray
                 .reduce((r, x) => {
                     const
+                        // tag streams with a random id ...
+                        mediaId = createUniqueId(),
                         // extract url and duration
                         {mediaLocation, locationReferer, metadata: {format: {duration}, streams}} = x;
                     // add properties, spread, push in accumulator
@@ -187,12 +179,14 @@ const
                         // so this rule has to be disabled
                         // eslint-disable-next-line prefer-object-spread
                         .map(stream => Object.assign({
+                            // save unique id
+                            _mediaId: mediaId,
                             // save url
                             _mediaLocation: mediaLocation,
                             // save referer
                             _mediaReferer: locationReferer,
                             // round stream durations
-                            _mediaDuration: Math.ceil(Number(duration))
+                            _mediaDuration: Math.floor(Number(duration))
                         }, stream)));
                     // return
                     return r;
@@ -226,25 +220,34 @@ const
             }
 
             if (audioOnly)
+                // if -a is set, remove video streams
                 streamz = streamz.filter(x => x[`codec_type`] === `audio`);
 
             // and isolate individual media
             while (streamz[0]) {
 
                 const
-                    // current media referer and duration
-                    {_mediaReferer, _mediaDuration} = streamz[0],
+                    // extract first stream attributes
+                    {_mediaId, _mediaReferer, _mediaDuration} = streamz[0],
+                    // find index
+                    posBufferEnd = streamz.findIndex(x => x[`_mediaReferer`] !== _mediaReferer || x[`_mediaDuration`] !== _mediaDuration),
+                    // buffer streams with the same referer and duration
+                    streamsBuffer = streamz.splice(0, posBufferEnd === -1 ? streamz.length : posBufferEnd),
+                    // find the first stream bearing a different media id
+                    posMediaEnd = streamsBuffer.findIndex(x => x[`_mediaId`] !== _mediaId),
+                    // if not found, all streams belong to the current media
+                    mediaStreams = streamsBuffer.splice(0, posMediaEnd === -1 ? streamz.length : posMediaEnd);
 
-                    // next media start index
-                    // nextMediaIndex = streamz.findIndex(x => x[`_mediaReferer`] !== _mediaReferer || x[`_mediaDuration`] !== _mediaDuration),
-                    // nextMediaIndex = streamz.findIndex(x => x[`_mediaReferer`] !== _mediaReferer || Math.abs(x[`_mediaDuration`] - _mediaDuration) > 1),
-                    nextMediaIndex = audioOnly ?
-                        streamz.findIndex(x => x[`_mediaReferer`] !== _mediaReferer || x[`_mediaDuration`] !== _mediaDuration) :
-                        streamz.findIndex(x => x[`_mediaReferer`] !== _mediaReferer || Math.abs(x[`_mediaDuration`] - _mediaDuration) > 1),
+                // media successfully extracted from buffer
+                if (mediaStreams.length > 1)
+                    // unshift the buffer remainder back into streamz ...
+                    streamz.unshift(...streamsBuffer);
+                // all buffered streams belong to the same media
+                else
+                    // and will be processed as such
+                    mediaStreams.push(...streamsBuffer);
 
-                    // isolate media
-                    mediaStreams = streamz.splice(0, nextMediaIndex === -1 ? streamz.length : nextMediaIndex),
-
+                const
                     // generate random name
                     fname = uniqueNamesGenerator({
                         dictionaries: [ adjectives, colors, languages, starWars ],
@@ -259,6 +262,7 @@ const
                             mediaStreams
                                 .map(x => `source: ${ x[`_mediaReferer`] }, ` +
                                           `duration: ${ x[`_mediaDuration`] }s, ` +
+                                          `media id: ${ x[`_mediaId`] }, ` +
                                           `codec type: ${ x[`codec_type`] }, ${ x[`codec_type`] === `video` ? `frame size: ${ x[`width`] } x ${ x[`height`] }` : x[`codec_type`] === `audio` ? `sample rate: ${ x[`sample_rate`] }` : `unknown codec type` }, ` +
                                           `bit rate: ${ x[`bit_rate`] }, ` +
                                           `stream duration: ${ x[`duration`] }s`)
@@ -269,7 +273,7 @@ const
 
                 let
                     // init streams and options
-                    [ vidStr, audStr, mapOpts, audOpts, vidOpts, fformat ] = [ null, null, [], [], [], null ];
+                    [ vidStr, audStr, cmdOpts, fformat ] = [ null, null, [], [], [], [], null ];
 
                 // isolate audio stream
                 audStr = mediaStreams
@@ -291,91 +295,89 @@ const
                         return 0;
                     })[0];
 
-                // audio stream options
-                audOpts = [ `-c:a:0 copy`, `-strict experimental` ];
+                // isolate video stream
+                vidStr = mediaStreams
+                    // sort streams by height
+                    .sort((a, b) => {
+                        // if both values are known
+                        if (isNaN(a[`height`]) === false && isNaN(b[`height`]) === false)
+                            // sort highest value first
+                            return b[`height`] - a[`height`];
+                        // value unknown for b
+                        else if (isNaN(b[`height`]))
+                            // sort a first
+                            return -1;
+                        // value unknown for a
+                        else if (isNaN(a[`height`]))
+                            // sort b first
+                            return 1;
+                        // both values unknown, keep a and b as is
+                        return 0;
+                    })[0];
 
-                if (audioOnly) {
+                switch (true) {
+                // -a is set or video stream is not a video stream
+                case audioOnly || vidStr[`codec_type`] !== `video` :
+                    // reset video stream to null
+                    vidStr = null;
+                    // map : audio stream only, codec : copy
+                    cmdOpts = [ `-map 0:${ audStr[`index`] }`, `-c:a:0 copy`, `-strict experimental` ];
+                    break;
+                // audio stream is not an audio stream
+                case audStr[`codec_type`] !== `audio` :
+                    // reset audio stream to null
+                    audStr = null;
+                    // map : video stream only, codec : copy
+                    cmdOpts = [ `-map 0:${ vidStr[`index`] }`, `-c:v:0 copy`, `-strict experimental` ];
+                    break;
+                // audio and video streams are valid
+                default :
+                    // map : audio and video streams, codecs : copy
+                    cmdOpts = [ `-map 0:${ audStr[`index`] }`, `-map 1:${ vidStr[`index`] }`, `-c:a:0 copy`, `-strict experimental`, `-c:v:0 copy`, `-strict experimental` ];
+                    break;
+                }
 
-                    // mapping options, audio only
-                    mapOpts = [ `-map 0:${ audStr[`index`] }` ];
-
-                    if (audStr[`codec_long_name`] in AUDIO_CODEC_FILE_EXT)
-                        // save format ...
-                        fformat = AUDIO_CODEC_FILE_EXT[audStr[`codec_long_name`]];
-                    else {
-                        // log media streams
-                        eventLog =  `\naudio stream codec: ${ audStr[`codec_long_name`] }` +
-                                    `\nsave file extension is not configured for the above codec, current media will be discarded 😭.`;
-                        // output
-                        pLog.writeLog(eventLog);
-                        // proceed to next media
-                        continue;
-                    }
-
-                } else {
-
-                    // isolate video stream
-                    vidStr = mediaStreams
-                        // sort streams by height
-                        .sort((a, b) => {
-                            // if both values are known
-                            if (isNaN(a[`height`]) === false && isNaN(b[`height`]) === false)
-                                // sort highest value first
-                                return b[`height`] - a[`height`];
-                            // value unknown for b
-                            else if (isNaN(b[`height`]))
-                                // sort a first
-                                return -1;
-                            // value unknown for a
-                            else if (isNaN(a[`height`]))
-                                // sort b first
-                                return 1;
-                            // both values unknown, keep a and b as is
-                            return 0;
-                        })[0];
-
-                    // check that audio and video streams are present for current media, throw error if not
-                    if (vidStr[`codec_type`] !== `video` || audStr[`codec_type`] !== `audio`) {
-                        // log media streams
-                        eventLog =  `\nselected audio stream: ${ audStr[`_mediaLocation`] }` +
-                                    `\nselected video stream: ${ vidStr[`_mediaLocation`] }` +
-                                    `\ncurrent media contains invalid streams and will be discarded 😭.`;
-                        // output
-                        pLog.writeLog(eventLog);
-                        // proceed to next media
-                        continue;
-                    }
-
-                    // mapping options, audio then video
-                    mapOpts = [ `-map 0:${ audStr[`index`] }`, `-map 1:${ vidStr[`index`] }` ];
-
-                    // video stream options, always copy
-                    vidOpts = [ `-c:v:0 copy`, `-strict experimental` ];
-
-                    if (vidStr[`codec_long_name`] in VIDEO_CODEC_FILE_EXT)
-                        // save format ...
-                        fformat = VIDEO_CODEC_FILE_EXT[vidStr[`codec_long_name`]];
-                    else {
-                        // log media streams
-                        eventLog =  `\nvideo stream codec: ${ vidStr[`codec_long_name`] }` +
-                                    `\nsave file extension is not configured for the above codec, current media will be discarded 😭.`;
-                        // output
-                        pLog.writeLog(eventLog);
-                        // proceed to next media
-                        continue;
-                    }
-
+                switch (true) {
+                // if video stream is still there
+                case vidStr && vidStr[`codec_long_name`] in VIDEO_CODEC_FILE_EXT :
+                    // retrieve extension for video file ...
+                    fformat = VIDEO_CODEC_FILE_EXT[vidStr[`codec_long_name`]];
+                    break;
+                case vidStr :
+                    // log media streams
+                    eventLog =  `\nvideo stream codec: ${ vidStr[`codec_long_name`] }` +
+                                `\nsave file extension is not configured for the above codec, current media will be discarded 😭.`;
+                    // output
+                    pLog.writeLog(eventLog);
+                    // proceed to next media
+                    continue;
+                // if not
+                case audStr && audStr[`codec_long_name`] in AUDIO_CODEC_FILE_EXT :
+                    // retrieve extension for audio file ...
+                    fformat = AUDIO_CODEC_FILE_EXT[audStr[`codec_long_name`]];
+                    break;
+                case audStr :
+                    // log media streams
+                    eventLog =  `\naudio stream codec: ${ audStr[`codec_long_name`] }` +
+                                `\nsave file extension is not configured for the above codec, current media will be discarded 😭.`;
+                    // output
+                    pLog.writeLog(eventLog);
+                    // proceed to next media
+                    continue;
+                default :
+                    // Should never happen ...
+                    break;
                 }
 
                 // create media
                 successfulProbes
                     .push(new probedMedia({
-                        referer: audioOnly ? audStr[`_mediaReferer`] : vidStr[`_mediaReferer`],
-                        duration: audioOnly ? audStr[`_mediaDuration`] : vidStr[`_mediaDuration`],
+                        referer: vidStr ? vidStr[`_mediaReferer`] : audStr[`_mediaReferer`],
+                        duration: vidStr ? vidStr[`_mediaDuration`] : audStr[`_mediaDuration`],
                         audio: audStr,
                         video: vidStr,
                         target: `${ outputDir }/${ fname.replace(/[^A-Za-z0-9]/gu, ``) }.${ fformat }`,
-                        options: [ ...mapOpts, ...audOpts, ...vidOpts, `-f ${ fformat }` ]
+                        options: [ ...cmdOpts, `-f ${ fformat }` ]
                     }));
 
             }
@@ -414,7 +416,7 @@ const
                     bar: pOut.downloadBar(successfulProbes[counter][`duration`], successfulProbes[counter][`referer`])
                 });
                 // start async function immediately
-                promisesArray.push(pullMedia(successfulProbes[counter], audioOnly, verbose));
+                promisesArray.push(pullMedia(successfulProbes[counter], verbose));
             }
 
             // await the resolution of all promises

@@ -79,7 +79,22 @@ const
                         urls.push(...m);
                 })
                 .on(`close`, () => resolve(urls));
-        });
+        }),
+    // ---------------------------------------------------------------------------------
+    // user confirmation
+    confirmFetch = m =>
+        // eslint-disable-next-line implicit-arrow-linebreak
+        new Promise((resolve, reject) => {
+            createInterface({
+                input: process.stdin,
+                output: process.stdout
+            })
+                // eslint-disable-next-line no-confusing-arrow
+                .question(`${ m }\nDo you want to pull the above media to your hard drive ? (Y/n) ?\n`, ans => ans === `Y` ? resolve() : reject(new Error(`operation canceled.`)));
+        }),
+    // ---------------------------------------------------------------------------------
+    // Generate a unique ID on 12 positions ...
+    createUniqueId = () => `000000000000${ Math.round(Math.random() * 0xffffffffffff).toString(16) }`.slice(-12);
     // ---------------------------------------------------------------------------------
 
 class megadownload {
@@ -133,6 +148,7 @@ class output {
                 `\n---------------------------------\n` +
                 chalk.rgb(...CLI_PROBE_COLOR)(`MEDIA DURATION : ${ duration }s`) +
                 `\n---------------------------------\n` +
+            (audio === null ? `` :
                 `AUDIO STREAM ${ audio[`index`] }\n` +
                 // `SOURCE : ${ audio[`_mediaLocation`] }\n` +
                 `ENCODING : ${ audio[`codec_long_name`] }\n` +
@@ -140,7 +156,7 @@ class output {
                 `BIT RATE : ${ isNaN(audio[`bit_rate`]) ? `N/A` : audio[`bit_rate`] / 1000 } kbps\n` +
                 `LAYOUT : ${ audio[`channel_layout`] }\n` +
                 // `DURATION : ${ audio[`duration`] }s\n` +
-                `---------------------------------\n` +
+                `---------------------------------\n`) +
             (video === null ? `` :
                 `VIDEO STREAM ${ video[`index`] }\n` +
                 // `SOURCE : ${ video[`_mediaLocation`] }\n` +
@@ -242,4 +258,5 @@ class logger {
     // ---------------------------------------------------------------------------------
 }
 
-module.exports = {extractUrls, megadownload, output, logger};
+// eslint-disable-next-line object-curly-newline
+module.exports = {extractUrls, confirmFetch, createUniqueId, megadownload, output, logger};

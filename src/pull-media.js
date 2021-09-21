@@ -18,7 +18,7 @@ const
     // Config module
     {USER_AGENT, EVENT_RGX} = require(`./config`),
     // ---------------------------------------------------------------------------------
-    pullMedia = (media, audioOnly, verbose) =>
+    pullMedia = (media, verbose) =>
         // eslint-disable-next-line implicit-arrow-linebreak
         new Promise(resolve => {
             const
@@ -31,19 +31,20 @@ const
                     // logger being instantiated with null as logFile will result in logs being discarded ...
                     logFile: verbose ? logfileName : null,
                     cbError: err => rm(`${ target }.log`, {force: true}, () => {
-                        resolve(new resolver({audioSrc: audio[`_mediaLocation`], videoSrc: audioOnly ? null : video[`_mediaLocation`], transcodeSuccessful: false, errmsg: `error opening log file: ${ err[`message`] }`}));
+                        resolve(new resolver({audioSrc: audio ? audio[`_mediaLocation`] : null, videoSrc: video ? video[`_mediaLocation`] : null, transcodeSuccessful: false, errmsg: `error opening log file: ${ err[`message`] }`}));
                     })
                 }),
                 // create ffmpeg command
-                // mp4 format needs a 'seekable' target, so we can't pipe to a writable and have to use ffmpeg's builtins
-                // output format is mandatory for the wrapper, can't set it through the options
-                ffcmd = ffmpeg()
+                ffcmd = ffmpeg();
+
+            if (audio)
+                ffcmd
                     .input(audio[`_mediaLocation`])
                     // The cons of using the referer header outweigh the pros at the moment, so it will be disabled until further notice ...
                     // .inputOptions([ `-user_agent`, `'${ USER_AGENT }'`/* , `-headers`, `'Referer: ${ referer }'`*/ ]);
                     .inputOptions([ `-user_agent`, `'${ USER_AGENT }'` ]);
 
-            if (audioOnly === false)
+            if (video)
                 ffcmd
                     .input(video[`_mediaLocation`])
                     // The cons of using the referer header outweigh the pros at the moment, so it will be disabled until further notice ...
@@ -51,7 +52,9 @@ const
                     .inputOptions([ `-user_agent`, `'${ USER_AGENT }'` ]);
 
             ffcmd
+                // mp4 format needs a 'seekable' target, so we can't pipe to a writable and have to use ffmpeg's builtins
                 .outputOptions(options)
+                // output format is mandatory for the wrapper, can't set it through the options
                 .output(target);
 
             // set event listeners for command
@@ -83,7 +86,7 @@ const
                     bar.stop();
                     // ensure all writes to log file are completed
                     tLog.closeLog(`\ntranscoding succeeded.`, () => {
-                        resolve(new resolver({audioSrc: audio[`_mediaLocation`], videoSrc: audioOnly ? null : video[`_mediaLocation`], transcodeSuccessful: true, savedFile: target, logFile: logfileName}));
+                        resolve(new resolver({audioSrc: audio ? audio[`_mediaLocation`] : null, videoSrc: video ? video[`_mediaLocation`] : null, transcodeSuccessful: true, savedFile: target, logFile: logfileName}));
                     });
                 })
                 // transcoding error
@@ -91,7 +94,7 @@ const
                     // ensure all writes to log file are completed
                     // eslint-disable-next-line max-nested-callbacks
                     tLog.closeLog(`\ntranscoding error occured: ${ err[`message`] }`, () => {
-                        resolve(new resolver({audioSrc: audio[`_mediaLocation`], videoSrc: audioOnly ? null : video[`_mediaLocation`], transcodeSuccessful: false, errmsg: err[`message`], logFile: logfileName}));
+                        resolve(new resolver({audioSrc: audio ? audio[`_mediaLocation`] : null, videoSrc: video ? video[`_mediaLocation`] : null, transcodeSuccessful: false, errmsg: err[`message`], logFile: logfileName}));
                     });
                 }));
 

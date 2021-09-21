@@ -1,8 +1,8 @@
 # Megadownload
 
-*Browse the internet for content you like and save it to your local hard drive in an instant. Save bandwidth at the expense of diskspace. Free yourself of ads.*
+*Browse the internet for content you like and save it to your local hard drive in minutes. Save bandwidth at the expense of diskspace. Free yourself of ads.*
 
-#### See that youtube video that you keep going back to everyday for weeks on end because you enjoy it so much ? Why not saving it locally so you're one click away from playing it whenever you like, and furthermore without being bothered by ads ? Why not at the same time reduce bandwidth consumption and server load, thus saving energy ? Provided hereby are the means to achieve this very easily. Give it a try ! ####
+#### See that youtube/twitch/dailymotion/whatever video that you keep going back to every day for weeks on end because you enjoy it so much ? Why not saving it locally so you're one click away from playing it whenever you like without being bothered by ads ? Why not reduce bandwidth consumption and server load, thus saving energy ? Provided hereby are the means to achieve this easily. Give it a try ! ####
 
 ## prerequisites
    - Linux distro or WLS2 (debian 10.4.0 recommended)
@@ -23,15 +23,15 @@ Navigate to your install directory and type :
    - cd megadownload
    - npm install
 
-*One major limitation of this utility is that downloaded files are given random names. To circumvent this you can keep your browser open until downloads are completed, and then navigate your history to see which media you've viewed (and thus downloaded), and copy/paste the media titles to the downloaded files. I use durations to match downloaded files with viewed pages.*
+*One major limitation of this utility is that downloaded files are given random names. Once downloads are completed, navigate your history to see which media you've viewed, then copy/paste media titles to the downloaded files. Use durations to match downloaded files with viewed media.*
 
-## How to run it
+## how to use
 
 1. **Browse the internet and save your HTTP session**
    - Open your web browser and launch developer tools (F12 on Chrome).
    - Start recording your HTTP session (on Chrome : 'Network' tab, then Ctrl+E).
    - Go to your favorite platform, watch videos, listen to music ...
-   - Once you're done, save your HTTP session to a file (on Chrome : 'Network' tab, 'All', right click any item then 'Save all as HAR with content').
+   - Once you're done, save your HTTP session to a .har file (on Chrome : 'Network' tab, 'All', right click any item then 'Save all as HAR with content').
 
 2. **Run the program**
    - Open your shell, navigate to your install directory.
@@ -40,10 +40,25 @@ Navigate to your install directory and type :
    - Wait for your files to download.
    - Enjoy ad free, network latency free content !
 
-## Notes
-- Type ./megadownload.js -h to see all available options.
-- Has been extensively tested on [a number of platforms](./platformslist).
-- I routinely use it to download like 40-50 videos at the same time. Don't hesitate to feed it large 150-200 Mb HAR files !
-- All the successfully probed media from your HTTP session will be downloaded, which means that you'll often end up downloading ads/unwanted content.
-- My approach has been to minimize transcoding operations as much as possible to keep the system resources footprint as light as possible. Don't panic if you end up downloading *.webm, *.opus or *.adts files, your media player WILL be able to play them.
+## some advice
+   - You can provide multiple http session files after the -i option. All will be processed.
+   - Type ./megadownload.js -h to see all available options.
+   - The default minimal duration is 90 seconds, which means that all media lasting less than 90 seconds will be discarded. You can adjust it with the -d option.
+
+## important notes and advice
+   - All the successfully probed media from your HTTP session will be downloaded *in the highest possible quality*. That sometimes means lenghty downloads, but the result is enjoyable 😁.
+   - Don't panic if you end up with exotic file formats like *.webm, *.opus, *.adts, etc... (web media players use such formats, so your locally installed player should be able to play them as well).
+   - The algorithm will seek to extract as much media as possible from your session, so you'll often end up downloading unwanted content like :
+     - ads
+     - duplicates (same quality or lower)
+     - mute thumbnails previews
+   - Save the content you want to save and delete the rest (setting up the -d option to the approximate length of what interests you will discard most of the garbage).
+   - I routinely use it to download like 40-50 videos at the same time. Don't hesitate to feed it large 150-200 Mb HAR files !
+   - At the same time, don't go too much above the 50 simultaneous downloads mark or the progress bars may behave unexpectedly and mess up your terminal. Experiment until you find the volume of HAR data you're comfortable using.
+   - If you try to download multiple media with the exact same duration from the same platform, you may sometimes (but rarely) end up with video from a media muxed with the audio of another media.
+   - To counter this, you can always save a HAR file after you've opened an URL to a media, then immediately run the program on it.
+
+## less important notes
+- This was extensively tested on [a number of platforms](./platformslist). Though the list of supported platforms may expand in the future, your favorite platforms probably are already supported 😏. 
+- My approach was to minimize transcoding operations in order to keep the system resources footprint as light as possible, thus the "exotic" file formats.
 - This project is of course named after the late [megaupload.com](https://en.wikipedia.org/wiki/Megaupload). Shout out to everyone who was there to witness this glorious slice of internet history !
