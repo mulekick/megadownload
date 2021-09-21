@@ -28,10 +28,10 @@ Navigate to your install directory and type :
 ## how to use
 
 1. **Browse the internet and save your HTTP session**
-   - Open your web browser and launch developer tools (F12 on Chrome).
-   - Start recording your HTTP session (on Chrome : 'Network' tab, then Ctrl+E).
+   - Open your web browser and launch developer tools (F12 on Chrome/Edge).
+   - Start recording your HTTP session (on Chrome/Edge : 'Network' tab, then Ctrl+E to start/stop recording).
    - Go to your favorite platform, watch videos, listen to music ...
-   - Once you're done, save your HTTP session to a .har file (on Chrome : 'Network' tab, 'All', right click any item then 'Save all as HAR with content').
+   - Once you're done, save your HTTP session to a .har file (on Chrome/Edge : 'Network' tab, 'All', right click any item then 'Save all as HAR with content').
 
 2. **Run the program**
    - Open your shell, navigate to your install directory.
@@ -43,9 +43,12 @@ Navigate to your install directory and type :
 ## some advice
    - You can provide multiple http session files after the -i option. All will be processed.
    - Type ./megadownload.js -h to see all available options.
-   - The default minimal duration is 90 seconds, which means that all media lasting less than 90 seconds will be discarded. You can adjust it with the -d option.
+   - The default minimal media duration is 90 seconds, which means that all media lasting less than 90 seconds will be discarded. You can adjust it with the -d option.
+   - If you want to download audio-only files, use the -a option.
+   - As a bonus, a small script is included that will convert any media to an *.mp3 file. Download music from the platforms and make your own local playlists !
+   - To run it, type **. mp3convert.sh /path/to/files/to/convert** (the mp3 files will be saved in the same directory as the source files).
 
-## important notes and advice
+## important notes
    - All the successfully probed media from your HTTP session will be downloaded *in the highest possible quality*. That sometimes means lenghty downloads, but the result is enjoyable 😁.
    - Don't panic if you end up with exotic file formats like *.webm, *.opus, *.adts, etc... (web media players use such formats, so your locally installed player should be able to play them as well).
    - The algorithm will seek to extract as much media as possible from your session, so you'll often end up downloading unwanted content like :
@@ -53,10 +56,10 @@ Navigate to your install directory and type :
      - duplicates (same quality or lower)
      - mute thumbnails previews
    - Save the content you want to save and delete the rest (setting up the -d option to the approximate length of what interests you will discard most of the garbage).
-   - I routinely use it to download like 40-50 videos at the same time. Don't hesitate to feed it large 150-200 Mb HAR files !
+   - I routinely use it to download like 40-50 videos at the same time. Don't hesitate to feed it large 150-200 Mb .har files !
    - At the same time, don't go too much above the 50 simultaneous downloads mark or the progress bars may behave unexpectedly and mess up your terminal. Experiment until you find the volume of HAR data you're comfortable using.
    - If you try to download multiple media with the exact same duration from the same platform, you may sometimes (but rarely) end up with video from a media muxed with the audio of another media.
-   - To counter this, you can always save a HAR file after you've opened an URL to a media, then immediately run the program on it.
+   - To counter this, you can always save a .har file after you've opened an URL to a media, then immediately run the program on it.
 
 ## less important notes
 - This was extensively tested on [a number of platforms](./platformslist). Though the list of supported platforms may expand in the future, your favorite platforms probably are already supported 😏. 
