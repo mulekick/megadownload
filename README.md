@@ -86,6 +86,6 @@
 ## Notes
 - Dear Github user, [star FFmpeg](https://github.com/FFmpeg/FFmpeg) !
 - [The HTTP Archive format](https://en.wikipedia.org/wiki/HAR_(file_format))
-- This was extensively tested on [a number of platforms](./platformslist). Though the list of supported platforms may expand in the future, your favorite platforms probably are already supported 😏. 
+- This was extensively tested on [a number of platforms](https://raw.githubusercontent.com/mulekick/megadownload/master/platformslist). Though the list of supported platforms may expand in the future, your favorite platforms probably are already supported 😏. 
 - My approach was to minimize transcoding operations in order to keep the system resources footprint as light as possible, thus the "exotic" file formats.
 - This project is of course named after the late [megaupload.com](https://en.wikipedia.org/wiki/Megaupload). Shout out to everyone who was there to witness this glorious slice of internet history !
