@@ -113,6 +113,7 @@ class megadownload {
                 .option(`-d, --min-duration <minDuration>`, `minimum duration in seconds for a media to be downloaded`, validMinDuration, MIN_MEDIA_DURATION)
                 .option(`-n, --min-streams <minStreams>`, `minimum number of streams in a media to be downloaded`, validMinStreams, MIN_NB_OF_STREAMS)
                 .option(`-a, --audio-only`, `download only audio streams from all media and output audio files`, false)
+                .option(`-e, --extensive`, `download as much media as possible, including duplicates`, false)
                 // debug
                 .option(`-u, --dump-urls`, `parse input files, list urls selected for probing and exit`, false)
                 .option(`-v, --verbose`, `write log files for main process as well as for download/transcode processes`, false)

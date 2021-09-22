@@ -23,7 +23,7 @@ const
     // ---------------------------------------------------------------------------------
     // program options
     // eslint-disable-next-line complexity
-    processFiles = async({inputFiles, outputDir, minDuration, minStreams, audioOnly, dumpUrls, verbose, logFile}) => {
+    processFiles = async({inputFiles, outputDir, minDuration, minStreams, audioOnly, extensive, dumpUrls, verbose, logFile}) => {
 
         const
             // ---------------------------------------------------------------------------------
@@ -162,14 +162,11 @@ const
             // output
             pLog.writeLog(eventLog);
 
-            // media will be uniquely identified by referer and duration in seconds
-            // we will virtually demux here by spreading the contents of metadata[`streams`]
-            // then sort by duration, and let ffmpeg mux back the streams at a later stage
+            // we will virtually demux all media here by spreading the contents of metadata[`streams`],
+            // sort the streams depending on the selected mode, then let ffmpeg mux them back at a later stage
             resultsArray = resultsArray
                 .reduce((r, x) => {
                     const
-                        // tag streams with a random id ...
-                        mediaId = createUniqueId(),
                         // extract url and duration
                         {mediaLocation, locationReferer, metadata: {format: {duration}, streams}} = x;
                     // add properties, spread, push in accumulator
@@ -179,8 +176,6 @@ const
                         // so this rule has to be disabled
                         // eslint-disable-next-line prefer-object-spread
                         .map(stream => Object.assign({
-                            // save unique id
-                            _mediaId: mediaId,
                             // save url
                             _mediaLocation: mediaLocation,
                             // save referer
@@ -190,62 +185,89 @@ const
                         }, stream)));
                     // return
                     return r;
-                }, [])
-                // sort by referer
-                .sort((a, b) => b[`_mediaReferer`] - a[`_mediaReferer`]);
-
-
-            let
-                // opting for a quadratic sorting in order to extract more media
-                // streams will be ordered by referer, and then by duration
-                // note : network latency will make time complexity irrelevant ...
-                streamz = [];
-
-            while (resultsArray[0]) {
-                const
-                    // current media referer
-                    referer = resultsArray[0][`_mediaReferer`],
-
-                    // next referer start index
-                    nextRefererIndex = resultsArray.findIndex(x => x[`_mediaReferer`] !== referer),
-
-                    referredStreams = resultsArray
-                        // isolate current source streams
-                        .splice(0, nextRefererIndex === -1 ? resultsArray.length : nextRefererIndex)
-                        // sort by media duration (always known)
-                        .sort((a, b) => b[`_mediaDuration`] - a[`_mediaDuration`]);
-
-                // spread and push into streams ...
-                streamz.push(...referredStreams);
-            }
+                }, []);
 
             if (audioOnly)
                 // if -a is set, remove video streams
-                streamz = streamz.filter(x => x[`codec_type`] === `audio`);
+                resultsArray = resultsArray.filter(x => x[`codec_type`] === `audio`);
 
-            // and isolate individual media
+            let
+                // init variables
+                streamz = [];
+
+            // extensive mode : identify media with referer/duration/url
+            if (extensive) {
+                // opting for a quadratic sorting in order to extract more media
+                // streams will be ordered by referer, and then by duration
+                // note : network latency will make time complexity irrelevant ...
+                resultsArray
+                    // sort by referer first
+                    .sort((a, b) => b[`_mediaReferer`] - a[`_mediaReferer`]);
+
+                while (resultsArray[0]) {
+                    const
+                        // current media referer
+                        referer = resultsArray[0][`_mediaReferer`],
+
+                        // next referer start index
+                        posReferrerEnd = resultsArray.findIndex(x => x[`_mediaReferer`] !== referer),
+
+                        referredStreams = resultsArray
+                            // isolate current source streams
+                            .splice(0, posReferrerEnd === -1 ? resultsArray.length : posReferrerEnd)
+                            // sort by media duration (always known)
+                            .sort((a, b) => b[`_mediaDuration`] - a[`_mediaDuration`]);
+
+                    // spread and push into streamz ...
+                    streamz.push(...referredStreams);
+                }
+            // standard mode : identify media with duration only (+/- 1 second if downloading videos)
+            } else {
+                // linear sorting is enough
+                streamz = resultsArray
+                    // sort by duration only
+                    .sort((a, b) => b[`_mediaDuration`] - a[`_mediaDuration`]);
+            }
+
+            // isolate individual media
             while (streamz[0]) {
 
                 const
                     // extract first stream attributes
-                    {_mediaId, _mediaReferer, _mediaDuration} = streamz[0],
-                    // find index
-                    posBufferEnd = streamz.findIndex(x => x[`_mediaReferer`] !== _mediaReferer || x[`_mediaDuration`] !== _mediaDuration),
-                    // buffer streams with the same referer and duration
-                    streamsBuffer = streamz.splice(0, posBufferEnd === -1 ? streamz.length : posBufferEnd),
-                    // find the first stream bearing a different media id
-                    posMediaEnd = streamsBuffer.findIndex(x => x[`_mediaId`] !== _mediaId),
+                    {_mediaLocation, _mediaReferer, _mediaDuration} = streamz[0];
+
+                let
+                    // init variables
+                    [ posMediaEnd, mediaStreams ] = [ null, null ];
+
+                // extensive mode : identify media with referer/duration/url
+                if (extensive) {
+                    const
+                        // find upper index
+                        posBufferEnd = streamz.findIndex(x => x[`_mediaReferer`] !== _mediaReferer || x[`_mediaDuration`] !== _mediaDuration),
+                        // buffer streams with the same referer and duration
+                        streamsBuffer = streamz.splice(0, posBufferEnd === -1 ? streamz.length : posBufferEnd);
+
+                    // find the first stream originating from a different url
+                    posMediaEnd = streamsBuffer.findIndex(x => x[`_mediaLocation`] !== _mediaLocation);
                     // if not found, all streams belong to the current media
                     mediaStreams = streamsBuffer.splice(0, posMediaEnd === -1 ? streamz.length : posMediaEnd);
 
-                // media successfully extracted from buffer
-                if (mediaStreams.length > 1)
-                    // unshift the buffer remainder back into streamz ...
-                    streamz.unshift(...streamsBuffer);
-                // all buffered streams belong to the same media
-                else
-                    // and will be processed as such
-                    mediaStreams.push(...streamsBuffer);
+                    // media successfully extracted from buffer
+                    if (mediaStreams.length > 1)
+                        // unshift the buffer remainder back into streamz ...
+                        streamz.unshift(...streamsBuffer);
+                    // all buffered streams belong to the same media
+                    else
+                        // and will be processed as such
+                        mediaStreams.push(...streamsBuffer);
+                // standard mode : identify media with duration only (+/- 1 second if downloading videos)
+                } else {
+                    // find upper index
+                    posMediaEnd = audioOnly ? streamz.findIndex(x => x[`_mediaDuration`] !== _mediaDuration) : streamz.findIndex(x => Math.abs(x[`_mediaDuration`] - _mediaDuration) > 1);
+                    // all streams belong to the same media
+                    mediaStreams = streamz.splice(0, posMediaEnd === -1 ? streamz.length : posMediaEnd);
+                }
 
                 const
                     // generate random name
@@ -262,7 +284,6 @@ const
                             mediaStreams
                                 .map(x => `source: ${ x[`_mediaReferer`] }, ` +
                                           `duration: ${ x[`_mediaDuration`] }s, ` +
-                                          `media id: ${ x[`_mediaId`] }, ` +
                                           `codec type: ${ x[`codec_type`] }, ${ x[`codec_type`] === `video` ? `frame size: ${ x[`width`] } x ${ x[`height`] }` : x[`codec_type`] === `audio` ? `sample rate: ${ x[`sample_rate`] }` : `unknown codec type` }, ` +
                                           `bit rate: ${ x[`bit_rate`] }, ` +
                                           `stream duration: ${ x[`duration`] }s`)
