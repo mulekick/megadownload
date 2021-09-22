@@ -45,7 +45,9 @@ Then, navigate to your install directory and type :
 
 2. **Execute the program**
    - Open your shell, navigate to your install directory and type :
-```./megadownload.js -i /path/to/your/http/session/file -o /path/to/your/download/directory```
+```bash
+./megadownload.js -i /path/to/your/http/session/file -o /path/to/your/download/directory
+```
    - Review the duration/quality of the media probed from your HTTP session file and confirm.
    - Wait for your files to download.
    - Enjoy ad free, network latency free content !
