@@ -39,8 +39,6 @@
    - `cd megadownload`
    - `npm install`
 
-*One major limitation of this program is that **_downloaded files are given random names_**. Once downloads are completed, navigate your history to see which media you've viewed, then copy/paste media titles to the downloaded files. Use durations to match downloaded files with viewed media.*
-
 ## How to use
 
 ### Save your HTTP session to a file
@@ -59,6 +57,8 @@
    - Review the duration/quality of the media probed from your HTTP session file and confirm.
    - Wait for your files to download.
    - Enjoy ad free, network latency free content !
+
+*One major limitation of this program is that **_downloaded files are given random names_**. Once downloads are completed, navigate your history to see which media you've viewed, then copy/paste media titles to the downloaded files. Use durations to match downloaded files with viewed media.*
 
 ## Some advice
 
