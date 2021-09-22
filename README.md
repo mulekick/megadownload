@@ -7,11 +7,15 @@
 ## Contents
 - [Prerequisites](#prerequisites)
 - [How to install](#how-to-install)
+    - [FFmpeg](#install-ffmpeg-first)
+    - [megadownload](#install--the-program)
 - [How to use](#how-to-use)
-    - [Create a HTTP session file](#browse-the-internet-and-save-your-HTTP-session-to-a-file)
+    - [Create a HTTP session file](#save-your-http-session-to-a-file)
     - [Execute the program](#execute-the-program)
+    - [Download the files](#download-the-files)
 - [Some advice](#some-advice)
-- [Things you need to know](#things-you-need-to-know)
+    - [Using options](#using-options)
+    - [Things you need to know](#things-you-need-to-know)
 - [Notes](#notes)
 
 ## Prerequisites
@@ -23,12 +27,14 @@
    - git (version 2.20.1 recommended)
 
 ## How to install
-Install FFmpeg first :
+
+### Install FFmpeg first :
    - [FFmpeg provides officially supported packages for Debian, Ubuntu, Fedora and Red Hat](https://ffmpeg.org/download.html)
    - To install them, type : `sudo apt update && sudo apt install ffmpeg`
    - Afterwards, ensure installation succeded by typing : `ffmpeg -version`
 
-Then, navigate to your install directory and type :
+### Install the program :
+   - Navigate to your install directory and type :
    - `git clone https://github.com/mulekick/megadownload.git`
    - `cd megadownload`
    - `npm install`
@@ -37,24 +43,26 @@ Then, navigate to your install directory and type :
 
 ## How to use
 
-1. **Browse the internet and save your HTTP session to a file**
-   - Open your web browser and launch developer tools (F12 on Chrome/Edge).
-   - Start recording your HTTP session (on Chrome/Edge : 'Network' tab, then Ctrl+E to start/stop recording).
-   - Go to your favorite platform, watch videos, listen to music ...
-   - Once you're done, save your HTTP session to a .har file (on Chrome/Edge : 'Network' tab, 'All', right click any item then 'Save all as HAR with content').
+### Save your HTTP session to a file
+    - Open your web browser and launch developer tools (F12 on Chrome/Edge).
+    - Start recording your HTTP session (on Chrome/Edge : 'Network' tab, then Ctrl+E to start/stop recording).
+    - Go to your favorite platform, watch videos, listen to music ...
+    - Once you're done, save your HTTP session to a .har file (on Chrome/Edge : 'Network' tab, 'All', right click any item then 'Save all as HAR with content').
 
-2. **Execute the program**
-   - Open your shell, navigate to your install directory and type :
+### Execute the program
+    - Open your shell, navigate to your install directory and type :
 ```bash
 ./megadownload.js -i /path/to/your/http/session/file -o /path/to/your/download/directory
 ```
 
-3. **Download the files**
-   - Review the duration/quality of the media probed from your HTTP session file and confirm.
-   - Wait for your files to download.
-   - Enjoy ad free, network latency free content !
+### Download the files
+    - Review the duration/quality of the media probed from your HTTP session file and confirm.
+    - Wait for your files to download.
+    - Enjoy ad free, network latency free content !
 
 ## Some advice
+
+### Using options
    - You can provide multiple http session files after the **-i** option. All will be processed.
    - Type `./megadownload.js -h` to see all available options.
    - The default minimal media duration is 90 seconds, which means that all media lasting less than 90 seconds will be discarded. You can adjust it with the **-d** option.
@@ -62,7 +70,7 @@ Then, navigate to your install directory and type :
    - As a bonus, a small script is included that will convert any media to an *.mp3 file. Download music from the platforms and make your own local playlists !
    - To run it, type `. mp3convert.sh /path/to/files/to/convert` (the mp3 files will be saved in the same directory as the source files).
 
-## Things you need to know
+### Things you need to know
    - All the successfully probed media from your HTTP session will be downloaded *in the highest possible resolution/audio quality*. That sometimes means lenghty downloads, but the result is enjoyable 😁.
    - Don't panic if you end up with exotic file formats like *.webm, *.opus, *.adts, etc... (web media players use such formats, so your locally installed player should be able to play them as well).
    - The algorithm will seek to extract as much media as possible from your session, so you'll sometimes end up downloading unwanted content like :
