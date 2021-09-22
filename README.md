@@ -16,6 +16,8 @@
 - [Some advice](#some-advice)
     - [Using options](#using-options)
     - [Things you need to know](#things-you-need-to-know)
+    - [Standard mode](#standard-mode)
+    - [Extensive mode](#extensive-mode)
 - [Notes](#notes)
 
 ## Prerequisites
@@ -73,15 +75,27 @@
 ### Things you need to know
    - All the successfully probed media from your HTTP session will be downloaded *in the highest possible resolution/audio quality*. That sometimes means lenghty downloads, but the result is enjoyable 😁.
    - Don't panic if you end up with exotic file formats like *.webm, *.opus, *.adts, etc... (web media players use such formats, so your locally installed player should be able to play them as well).
-   - The algorithm will seek to extract as much media as possible from your session, so you'll sometimes end up downloading unwanted content like :
-     - ads
-     - duplicate media (of the same or different resolution/quality)
-     - mute thumbnails previews
-   - Save the content you want to keep and delete the rest (setting up the -d option to the approximate length of what interests you will discard most of the garbage).
    - I routinely use it to download like 40-50 videos at the same time. Don't hesitate to feed it large 150-200 Mb .har files !
    - At the same time, don't go too much above the 50 simultaneous downloads mark or the progress bars may behave unexpectedly and mess up your terminal. Experiment until you find the volume of HAR data you're comfortable using.
-   - **If you try to download multiple media with the exact same duration from the same platform, you may sometimes (but rarely) end up with video from a media muxed with the audio of another media.**
-   - To counter this, you can always save a .har file after you've opened an URL to a media, then immediately run the program on it.
+
+### Standard mode
+   - When using standard mode (default), the algorithm will uniquely identify the media to download **by their duration in seconds only**.
+   - It's the default mode you want to use for lengthy videos like movies or series (which rarely have the exact same duration) or just want to scrap the platforms for random content you may want to keep.
+   - The downside to this is that if your session contains multiple media with the same duration, the following situations may occur :
+     - Some media are missing
+     - Media undesirably contain only audio or video. 
+     - Video from a media is muxed with the audio of another media.
+     - Some high resolution videos are of a lesser quality compared to their platform-hosted counterparts (due to the source video stream having a lower bitrate).
+   - Despite this, standard mode should be sufficient in 90% of the cases.
+
+### Extensive mode
+   - When using extensive mode (**-e**), the algorithm will seek to extract **as much media as possible from your session**, so you'll often end up with :
+     - duplicate media, be they of the same or different resolution/quality.
+     - audio-only or video-only irrelevant files.
+   - It's the mode you want to use when standard mode fails to do the job, for example :
+     - You want to download multiple videos of the same duration.
+     - You want to farm top quality videos with the highest bitrate thus have to be sure that you download the largest files.
+   - The downside to this is that you'll often download a lot of garbage in the process that you'll have to manually delete afterwards.
 
 ## Notes
 - Dear Github user, [star FFmpeg](https://github.com/FFmpeg/FFmpeg) !
