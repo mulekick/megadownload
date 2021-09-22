@@ -44,21 +44,21 @@
 ## How to use
 
 ### Save your HTTP session to a file
-    - Open your web browser and launch developer tools (F12 on Chrome/Edge).
-    - Start recording your HTTP session (on Chrome/Edge : 'Network' tab, then Ctrl+E to start/stop recording).
-    - Go to your favorite platform, watch videos, listen to music ...
-    - Once you're done, save your HTTP session to a .har file (on Chrome/Edge : 'Network' tab, 'All', right click any item then 'Save all as HAR with content').
+   - Open your web browser and launch developer tools (F12 on Chrome/Edge).
+   - Start recording your HTTP session (on Chrome/Edge : 'Network' tab, then Ctrl+E to start/stop recording).
+   - Go to your favorite platform, watch videos, listen to music ...
+   - Once you're done, save your HTTP session to a .har file (on Chrome/Edge : 'Network' tab, 'All', right click any item then 'Save all as HAR with content').
 
 ### Execute the program
-    - Open your shell, navigate to your install directory and type :
+   - Open your shell, navigate to your install directory and type :
 ```bash
 ./megadownload.js -i /path/to/your/http/session/file -o /path/to/your/download/directory
 ```
 
 ### Download the files
-    - Review the duration/quality of the media probed from your HTTP session file and confirm.
-    - Wait for your files to download.
-    - Enjoy ad free, network latency free content !
+   - Review the duration/quality of the media probed from your HTTP session file and confirm.
+   - Wait for your files to download.
+   - Enjoy ad free, network latency free content !
 
 ## Some advice
 
