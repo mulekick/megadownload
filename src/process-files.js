@@ -16,7 +16,7 @@ const
     {uniqueNamesGenerator, adjectives, colors, languages, starWars} = require(`unique-names-generator`),
     {probeMedia} = require(`./probe-media`),
     {pullMedia} = require(`./pull-media`),
-    {extractUrls, confirmFetch, createUniqueId, output, logger} = require(`./utils`),
+    {numSort, alphaSort, extractUrls, confirmFetch, output, logger} = require(`./utils`),
     // ---------------------------------------------------------------------------------
     // Config module
     {vimeoUrlBandAid, MEDIA_FORMATS, VIDEO_CODEC_FILE_EXT, AUDIO_CODEC_FILE_EXT} = require(`./config`),
@@ -181,7 +181,10 @@ const
                             // save referer
                             _mediaReferer: locationReferer,
                             // round stream durations
-                            _mediaDuration: Math.floor(Number(duration))
+                            // _mediaDuration: Math.floor(Number(duration))
+
+                            _mediaDuration: Number(duration)
+
                         }, stream)));
                     // return
                     return r;
@@ -202,7 +205,7 @@ const
                 // note : network latency will make time complexity irrelevant ...
                 resultsArray
                     // sort by referer first
-                    .sort((a, b) => b[`_mediaReferer`] - a[`_mediaReferer`]);
+                    .sort((a, b) => alphaSort(a, b, `_mediaReferer`));
 
                 while (resultsArray[0]) {
                     const
@@ -216,7 +219,7 @@ const
                             // isolate current source streams
                             .splice(0, posReferrerEnd === -1 ? resultsArray.length : posReferrerEnd)
                             // sort by media duration (always known)
-                            .sort((a, b) => b[`_mediaDuration`] - a[`_mediaDuration`]);
+                            .sort((a, b) => numSort(a, b, `_mediaDuration`));
 
                     // spread and push into streamz ...
                     streamz.push(...referredStreams);
@@ -226,7 +229,7 @@ const
                 // linear sorting is enough
                 streamz = resultsArray
                     // sort by duration only
-                    .sort((a, b) => b[`_mediaDuration`] - a[`_mediaDuration`]);
+                    .sort((a, b) => numSort(a, b, `_mediaDuration`));
             }
 
             // isolate individual media
@@ -240,11 +243,13 @@ const
                     // init variables
                     [ posMediaEnd, mediaStreams ] = [ null, null ];
 
-                // extensive mode : identify media with referer/duration/url
+                // extensive mode : identify media with referer/duration/url (+/- 0.75 seconds if downloading videos)
                 if (extensive) {
                     const
                         // find upper index
-                        posBufferEnd = streamz.findIndex(x => x[`_mediaReferer`] !== _mediaReferer || x[`_mediaDuration`] !== _mediaDuration),
+                        posBufferEnd = audioOnly ?
+                            streamz.findIndex(x => x[`_mediaReferer`] !== _mediaReferer || x[`_mediaDuration`] !== _mediaDuration) :
+                            streamz.findIndex(x => x[`_mediaReferer`] !== _mediaReferer || Math.abs(x[`_mediaDuration`] - _mediaDuration) > 0.75),
                         // buffer streams with the same referer and duration
                         streamsBuffer = streamz.splice(0, posBufferEnd === -1 ? streamz.length : posBufferEnd);
 
@@ -261,10 +266,12 @@ const
                     else
                         // and will be processed as such
                         mediaStreams.push(...streamsBuffer);
-                // standard mode : identify media with duration only (+/- 1 second if downloading videos)
+                // standard mode : identify media with duration only (+/- 0.75 seconds if downloading videos)
                 } else {
                     // find upper index
-                    posMediaEnd = audioOnly ? streamz.findIndex(x => x[`_mediaDuration`] !== _mediaDuration) : streamz.findIndex(x => Math.abs(x[`_mediaDuration`] - _mediaDuration) > 1);
+                    posMediaEnd = audioOnly ?
+                        streamz.findIndex(x => x[`_mediaDuration`] !== _mediaDuration) :
+                        streamz.findIndex(x => Math.abs(x[`_mediaDuration`] - _mediaDuration) > 0.75);
                     // all streams belong to the same media
                     mediaStreams = streamz.splice(0, posMediaEnd === -1 ? streamz.length : posMediaEnd);
                 }
@@ -299,42 +306,12 @@ const
                 // isolate audio stream
                 audStr = mediaStreams
                     // sort streams by highest bitrate
-                    .sort((a, b) => {
-                        // if both values are known
-                        if (isNaN(a[`sample_rate`]) === false && isNaN(b[`sample_rate`]) === false)
-                            // sort highest value first
-                            return b[`sample_rate`] - a[`sample_rate`];
-                        // value unknown for b
-                        else if (isNaN(b[`sample_rate`]))
-                            // sort a first
-                            return -1;
-                        // value unknown for a
-                        else if (isNaN(a[`sample_rate`]))
-                            // sort b first
-                            return 1;
-                        // both values unknown, keep a and b as is
-                        return 0;
-                    })[0];
+                    .sort((a, b) => numSort(a, b, `sample_rate`))[0];
 
                 // isolate video stream
                 vidStr = mediaStreams
                     // sort streams by height
-                    .sort((a, b) => {
-                        // if both values are known
-                        if (isNaN(a[`height`]) === false && isNaN(b[`height`]) === false)
-                            // sort highest value first
-                            return b[`height`] - a[`height`];
-                        // value unknown for b
-                        else if (isNaN(b[`height`]))
-                            // sort a first
-                            return -1;
-                        // value unknown for a
-                        else if (isNaN(a[`height`]))
-                            // sort b first
-                            return 1;
-                        // both values unknown, keep a and b as is
-                        return 0;
-                    })[0];
+                    .sort((a, b) => numSort(a, b, `height`))[0];
 
                 switch (true) {
                 // -a is set or video stream is not a video stream

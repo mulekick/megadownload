@@ -77,6 +77,9 @@
    - Don't panic if you end up with exotic file formats like *.webm, *.opus, *.adts, etc... (web media players use such formats, so your locally installed player should be able to play them as well).
    - I routinely use it to download like 40-50 videos at the same time. Don't hesitate to feed it large 150-200 Mb .har files !
    - At the same time, don't go too much above the 50 simultaneous downloads mark or the progress bars may behave unexpectedly and mess up your terminal. Experiment until you find the volume of HAR data you're comfortable using.
+   - You can also use HTTP capture software like [Fiddler](https://www.telerik.com/fiddler) or [httpry](https://linux.die.net/man/1/httpry) to generate your .har files.
+
+*Remember that the server urls providing access to media often expire after a few hours. In other words, don't wait too long before feeding your HTTP session files to the program.*
 
 ### Standard mode
    - When using standard mode (default), the algorithm will uniquely identify the media to download **by their duration in seconds only**.

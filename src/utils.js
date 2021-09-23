@@ -53,6 +53,53 @@ const
         return Number(n);
     },
     // ---------------------------------------------------------------------------------
+    // sort objects on properties
+    numSort = (a, b, p) => {
+        const
+            // extract properties
+            [ pa, pb ] = [ a[p], b[p] ];
+        // if both values are known
+        if (isNaN(pa) === false && isNaN(pb) === false)
+            // sort highest value first
+            return pb - pa;
+        // value unknown for b
+        else if (isNaN(pb))
+            // sort a first
+            return -1;
+        // value unknown for a
+        else if (isNaN(pa))
+            // sort b first
+            return 1;
+        // both values unknown, keep a and b as is
+        return 0;
+    },
+    alphaSort = (a, b, p) => {
+        const
+            // extract values
+            [ pa, pb ] = [ a[p], b[p] ];
+
+        if (typeof pa !== `string` || typeof pb !== `string`)
+            // sort strings only
+            return 0;
+        let
+            // init
+            pos = 0;
+        while (pa[pos] && pb[pos]) {
+            const
+                // sort according to UTF16 code units
+                [ cua, cub ] = [ pa.charCodeAt(pos), pb.charCodeAt(pos) ];
+            if (cua < cub)
+                // sort a first
+                return -1;
+            else if (cua > cub)
+                // sort b first
+                return 1;
+            pos++;
+        }
+        // if a is shorter than b, sort a first
+        return pb[pos] ? -1 : pa[pos] ? 1 : 0;
+    },
+    // ---------------------------------------------------------------------------------
     // async url isolation
     extractUrls = file =>
         // eslint-disable-next-line implicit-arrow-linebreak
@@ -260,4 +307,4 @@ class logger {
 }
 
 // eslint-disable-next-line object-curly-newline
-module.exports = {extractUrls, confirmFetch, createUniqueId, megadownload, output, logger};
+module.exports = {numSort, alphaSort, extractUrls, confirmFetch, createUniqueId, megadownload, output, logger};
