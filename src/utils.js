@@ -77,7 +77,6 @@ const
         const
             // extract values
             [ pa, pb ] = [ a[p], b[p] ];
-
         if (typeof pa !== `string` || typeof pb !== `string`)
             // sort strings only
             return 0;

@@ -180,11 +180,8 @@ const
                             _mediaLocation: mediaLocation,
                             // save referer
                             _mediaReferer: locationReferer,
-                            // round stream durations
-                            // _mediaDuration: Math.floor(Number(duration))
-
+                            // save duration
                             _mediaDuration: Number(duration)
-
                         }, stream)));
                     // return
                     return r;
