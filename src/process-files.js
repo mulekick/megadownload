@@ -221,7 +221,7 @@ const
                     // spread and push into streamz ...
                     streamz.push(...referredStreams);
                 }
-            // standard mode : identify media with duration only (+/- 1 second if downloading videos)
+            // standard mode : identify media with duration only (+/- 0.75 seconds if downloading videos)
             } else {
                 // linear sorting is enough
                 streamz = resultsArray

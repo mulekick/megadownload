@@ -46,7 +46,7 @@
 ### Save your HTTP session to a file
    - Open your web browser and launch developer tools (F12 on Chrome/Edge).
    - Start recording your HTTP session (on Chrome/Edge : 'Network' tab, then Ctrl+E to start/stop recording).
-   - Go to your favorite platform, watch videos, listen to music ...
+   - Go to [your favorite platforms](https://raw.githubusercontent.com/mulekick/megadownload/master/platformslist), watch videos, listen to music ...
    - Once you're done, save your HTTP session to a .har file (on Chrome/Edge : 'Network' tab, 'All', right click any item then 'Save all as HAR with content').
 
 ### Execute the program
@@ -103,6 +103,5 @@
 ## Notes
 - Dear Github user, [star FFmpeg](https://github.com/FFmpeg/FFmpeg) !
 - [The HTTP Archive format](https://en.wikipedia.org/wiki/HAR_(file_format))
-- This was extensively tested on [a number of platforms](https://raw.githubusercontent.com/mulekick/megadownload/master/platformslist). Though the list of supported platforms may expand in the future, your favorite platforms probably are already supported 😏. 
 - My approach was to minimize transcoding operations in order to keep the system resources footprint as light as possible, thus the "exotic" file formats.
 - This project is of course named after the late [megaupload.com](https://en.wikipedia.org/wiki/Megaupload). Shout out to everyone who was there to witness this glorious slice of internet history !

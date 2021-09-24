@@ -1,3 +1,5 @@
+This program was succesfully tested on the following platforms :
+
 archive.org
 barnhub.com
 bitchute.com
@@ -10,7 +12,7 @@ ishare.rediff.com
 manyvods.com
 newgrounds.com
 odysee.com
-ok.ru (open video url, open developer tools, toggle device to mobile, prepend m. to url to load the mobile version, press play, then save as HAR 🤯)
+ok.ru/video (open video url, open developer tools, toggle device to mobile, prepend m. to url to load the mobile version, press play, then save as HAR 🤯)
 play.tudou.com
 redcube.com
 rutube.ru
@@ -25,4 +27,5 @@ youbarn.com
 youtube.com
 zhamster.com
 zvideos.com
-😎
+
+Though the list may expand in the future, your favorite ones probably already are on the list ... 😏
