@@ -2,7 +2,7 @@
 
 *Browse the internet for content you like and save it to your local hard drive in minutes. Save bandwidth at the expense of diskspace. Free yourself of ads.*
 
-#### See that youtube/twitch/dailymotion/whatever video that you keep going back to every day for weeks on end because you enjoy it so much ? Why not saving it locally so you're one click away from playing it whenever you like without being bothered by ads ? Why not reduce bandwidth consumption and server load, thus saving energy ? Provided hereby are the means to achieve this easily. Give it a try ! ####
+#### See that [youtube/twitch/dailymotion/whatever](https://raw.githubusercontent.com/mulekick/megadownload/master/platformslist) video that you keep going back to every day for weeks on end because you enjoy it so much ? Why not saving it locally so you're one click away from playing it whenever you like without being bothered by ads ? Why not reduce bandwidth consumption and server load, thus saving energy ? Provided hereby are the means to achieve this easily. Give it a try ! ####
 
 ## Contents
 - [Prerequisites](#prerequisites)
