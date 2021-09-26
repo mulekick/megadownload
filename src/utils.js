@@ -136,11 +136,8 @@ const
                 output: process.stdout
             })
                 // eslint-disable-next-line no-confusing-arrow
-                .question(`${ m }\nDo you want to pull the above media to your hard drive ? (Y/n) ?\n`, ans => ans === `Y` ? resolve() : reject(new Error(`operation canceled.`)));
-        }),
-    // ---------------------------------------------------------------------------------
-    // Generate a unique ID on 12 positions ...
-    createUniqueId = () => `000000000000${ Math.round(Math.random() * 0xffffffffffff).toString(16) }`.slice(-12);
+                .question(`${ m }\n\nDo you want to pull the above media to your hard drive ? (Y/n) ?\n`, ans => ans === `Y` ? resolve() : reject(new Error(`operation canceled.`)));
+        });
     // ---------------------------------------------------------------------------------
 
 class megadownload {
@@ -191,29 +188,42 @@ class output {
         const
             {referer, duration, audio, video, target} = x;
         // eslint-disable-next-line prefer-template
+        return  chalk.rgb(...CLI_PROBE_COLOR)(
+            `=================================` +
+            `\n*********** PROBE ${ i + 1 } ************` +
+            `\n=================================` +
+            `\nsource\t${ referer }`) +
+            `\nlength\t${ duration }s` +
+            (video === null ? `` : `\nvideo\t${ video[`width`] }x${ video[`height`] } px, ${ isNaN(video[`bit_rate`]) ? `n/a` : video[`bit_rate`] / 1000 } kbps`) +
+            (audio === null ? `` : `\naudio\t${ audio[`channel_layout`] }, ${ isNaN(audio[`sample_rate`]) ? `n/a` : audio[`sample_rate`] / 1000 } kHz`) +
+            chalk.rgb(...CLI_SAVE_COLOR)(`\nfile\t${ target }`);
+
+        /*
+        // eslint-disable-next-line prefer-template
         return  chalk.rgb(...CLI_PROBE_COLOR)(`MEDIA ${ i } FROM : ${ referer }`) +
                 `\n---------------------------------\n` +
                 chalk.rgb(...CLI_PROBE_COLOR)(`MEDIA DURATION : ${ duration }s`) +
                 `\n---------------------------------\n` +
             (audio === null ? `` :
                 `AUDIO STREAM ${ audio[`index`] }\n` +
-                // `SOURCE : ${ audio[`_mediaLocation`] }\n` +
+                `SOURCE : ${ audio[`_mediaLocation`] }\n` +
                 `ENCODING : ${ audio[`codec_long_name`] }\n` +
                 `SAMPLE RATE : ${ isNaN(audio[`sample_rate`]) ? `N/A` : audio[`sample_rate`] / 1000 } kHz\n` +
                 `BIT RATE : ${ isNaN(audio[`bit_rate`]) ? `N/A` : audio[`bit_rate`] / 1000 } kbps\n` +
                 `LAYOUT : ${ audio[`channel_layout`] }\n` +
-                // `DURATION : ${ audio[`duration`] }s\n` +
+                `DURATION : ${ audio[`duration`] }s\n` +
                 `---------------------------------\n`) +
             (video === null ? `` :
                 `VIDEO STREAM ${ video[`index`] }\n` +
-                // `SOURCE : ${ video[`_mediaLocation`] }\n` +
+                `SOURCE : ${ video[`_mediaLocation`] }\n` +
                 `ENCODING : ${ video[`codec_long_name`] }\n` +
                 `RESOLUTION : ${ video[`width`] }x${ video[`height`] }\n` +
                 `BIT RATE : ${ isNaN(video[`bit_rate`]) ? `N/A` : video[`bit_rate`] / 1000 } kbps\n` +
-                // `DURATION : ${ video[`duration`] }s\n` +
+                `DURATION : ${ video[`duration`] }s\n` +
                 `---------------------------------\n`) +
                 chalk.rgb(...CLI_SAVE_COLOR)(`SAVED AS : ${ target }`) +
                 `\n---------------------------------`;
+        */
     }
 
     // ---------------------------------------------------------------------------------
@@ -306,4 +316,4 @@ class logger {
 }
 
 // eslint-disable-next-line object-curly-newline
-module.exports = {numSort, alphaSort, extractUrls, confirmFetch, createUniqueId, megadownload, output, logger};
+module.exports = {numSort, alphaSort, extractUrls, confirmFetch, megadownload, output, logger};
