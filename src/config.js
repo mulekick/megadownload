@@ -69,7 +69,7 @@ const
         REFERER_RGX: /^(?<referer>http|https:\/\/(?:[a-zA-Z0-9-]+\.)+[a-zA-Z0-9-]+)(?::\d+)?\/[^ "]+$/u,
 
         // url isolation
-        ISOLATION_RGX: /(?:http|https):\/\/(?:[a-zA-Z0-9-]+\.)+[a-zA-Z0-9-]+(?::\d+)?\/[^ '"\s]*(?:(?:\.|\/)m3u8|(?:\.|video_)mp4|\W\d{3,4}p\W|videoplayback\?|master\.json\?base64_init=1|\/streams\/|talk\/hls\/)[^ '"\s]*/gu,
+        ISOLATION_RGX: /(?:http|https):\/\/(?:[a-zA-Z0-9-]+\.)+[a-zA-Z0-9-]+(?::\d+)?\/[^ '"\s]*(?:(?:\.|\/)m3u8|(?:\.|video_)mp4|\W\d{3,4}p\W|videoplayback\?|master\.json\?base64_init=1|\/streams\/|talk\/hls\/)[^ `'"\s]*/gu,
 
         // transcoding events
         EVENT_RGX: /(?:frame=\s*(?<frame>\d+)\sfps=\s*(?<fps>[0-9.]+)\sq=[0-9.-]+\sL?)?size=\s*(?<size>\d+)kB\stime=(?<time>\d{2}:\d{2}:\d{2}).\d{2}\sbitrate=\s*(?<bitrate>[0-9.]+)kbits\/s\sspeed=\s*(?<speed>[0-9.]+)x/u

@@ -16,7 +16,7 @@ const
     // Config module
     {odoklassnikiHeaderBandAid, removeRangeBandAid, USER_AGENT, REFERER_RGX} = require(`./config`),
     // ---------------------------------------------------------------------------------
-    fetchMediaUrl = url =>
+    fetchMediaUrl = (referer, url) =>
         // eslint-disable-next-line implicit-arrow-linebreak
         new Promise(resolve  => {
             const
@@ -25,9 +25,10 @@ const
                 readbl = new FetchStream(url, {
                     headers: {
                         Connection: `keep-alive`,
-                        // The cons of using the referer header outweigh the pros at the moment, so it will be disabled until further notice ...
-                        // Referer: `${ referer }`,
-                        'User-Agent': USER_AGENT
+                        Pragma: `no-cache`,
+                        'Cache-Control': `no-cache`,
+                        'User-Agent': `${ USER_AGENT }`,
+                        Referer: `${ referer }/`
                     }
                 });
             readbl
@@ -83,8 +84,13 @@ const
             // probe media source ...
             ffmpeg
                 // probe input (provide input options as second argument)
-                // The cons of using the referer header outweigh the pros at the moment, so it will be disabled until further notice ...
-                .ffprobe(resolvedUrl, [ `-user_agent`, `'${ USER_AGENT }'`/* , `-headers`, `'Referer: ${ referer }'`*/ ], (err, metaprobe) => {
+                .ffprobe(resolvedUrl, [
+                    `-headers`, `Connection: keep-alive`,
+                    `-headers`, `Pragma: no-cache`,
+                    `-headers`, `Cache-Control: no-cache`,
+                    `-headers`, `User-Agent: ${ USER_AGENT }`,
+                    `-headers`, `Referer: ${ referer }/`
+                ], (err, metaprobe) => {
                     // increment progress bar
                     progBar.increment();
                     // return final result
@@ -115,7 +121,7 @@ const
             // extract host
             [ referer ] = match === null ? [ `unknown` ] : match.slice(1),
             // await media url resolution
-            fetchResult = await fetchMediaUrl(url);
+            fetchResult = await fetchMediaUrl(referer, url);
 
         // url resolution fails
         if (fetchResult instanceof resolver) {

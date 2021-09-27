@@ -40,14 +40,38 @@ const
             if (audio)
                 ffcmd
                     .input(audio[`_mediaLocation`])
-                    // The cons of using the referer header outweigh the pros at the moment, so it will be disabled until further notice ...
-                    .inputOptions([ `-user_agent`, `'${ USER_AGENT }'`/* , `-headers`, `'Referer: ${ referer }'`*/ ]);
+                    .inputOptions([
+                        `-user_agent`, `${ USER_AGENT }`,
+                        `-referer`, `${ referer }/`
+                    ]);
+                // wrapper option parsing behavior needs to be fixed before this is enabled
+                /*
+                    .inputOptions([
+                        `-headers`, `'Connection: keep-alive'`,
+                        `-headers`, `'Pragma: no-cache'`,
+                        `-headers`, `'Cache-Control: no-cache'`,
+                        `-headers`, `'User-Agent: ${ USER_AGENT }'`,
+                        `-headers`, `'Referer: ${ referer }/'`
+                    ]);
+                */
 
             if (video)
                 ffcmd
                     .input(video[`_mediaLocation`])
-                    // The cons of using the referer header outweigh the pros at the moment, so it will be disabled until further notice ...
-                    .inputOptions([ `-user_agent`, `'${ USER_AGENT }'`/* , `-headers`, `'Referer: ${ referer }'`*/ ]);
+                    .inputOptions([
+                        `-user_agent`, `${ USER_AGENT }`,
+                        `-referer`, `${ referer }/`
+                    ]);
+                // wrapper option parsing behavior needs to be fixed before this is enabled
+                /*
+                    .inputOptions([
+                        `-headers`, `'Connection: keep-alive'`,
+                        `-headers`, `'Pragma: no-cache'`,
+                        `-headers`, `'Cache-Control: no-cache'`,
+                        `-headers`, `'User-Agent: ${ USER_AGENT }'`,
+                        `-headers`, `'Referer: ${ referer }/'`
+                    ]);
+                */
 
             ffcmd
                 // mp4 format needs a 'seekable' target, so we can't pipe to a writable and have to use ffmpeg's builtins
