@@ -253,10 +253,10 @@ const
                     // find the first stream originating from a different url
                     posMediaEnd = streamsBuffer.findIndex(x => x[`_mediaLocation`] !== _mediaLocation);
                     // if not found, all streams belong to the current media
-                    mediaStreams = streamsBuffer.splice(0, posMediaEnd === -1 ? streamz.length : posMediaEnd);
+                    mediaStreams = streamsBuffer.splice(0, posMediaEnd === -1 ? streamsBuffer.length : posMediaEnd);
 
                     // media successfully extracted from buffer
-                    if (mediaStreams.length > 1)
+                    if (audioOnly || mediaStreams.length > 1)
                         // unshift the buffer remainder back into streamz ...
                         streamz.unshift(...streamsBuffer);
                     // all buffered streams belong to the same media
