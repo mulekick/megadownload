@@ -168,7 +168,7 @@ const
                 .reduce((r, x) => {
                     const
                         // extract url and duration
-                        {mediaLocation, locationReferer, metadata: {format: {duration}, streams}} = x;
+                        {mediaLocation, mediaReferer, metadata: {format: {duration}, streams}} = x;
                     // add properties, spread, push in accumulator
                     r.push(...streams
                         // reminder: target object comes first ...
@@ -179,7 +179,7 @@ const
                             // save url
                             _mediaLocation: mediaLocation,
                             // save referer
-                            _mediaReferer: locationReferer,
+                            _mediaReferer: mediaReferer,
                             // save duration
                             _mediaDuration: Number(duration)
                         }, stream)));
@@ -252,7 +252,7 @@ const
 
                     // find the first stream originating from a different url
                     posMediaEnd = streamsBuffer.findIndex(x => x[`_mediaLocation`] !== _mediaLocation);
-                    // if not found, all streams belong to the current media
+                    // if not found, all buffered streams belong to the current media
                     mediaStreams = streamsBuffer.splice(0, posMediaEnd === -1 ? streamsBuffer.length : posMediaEnd);
 
                     // media successfully extracted from buffer

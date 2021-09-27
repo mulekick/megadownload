@@ -1,9 +1,9 @@
 'use strict';
 
 class resolver {
-    constructor({url = null, fetched = null, probed = null, errmsg = null, mediaLocation = null, locationReferer = null, metadata = null} = {}) {
+    constructor({url = null, fetched = null, probed = null, errmsg = null, mediaLocation = null, mediaReferer = null, metadata = null} = {}) {
         // eslint-disable-next-line object-curly-newline
-        Object.assign(this, {url, fetched, probed, errmsg, mediaLocation, locationReferer, metadata});
+        Object.assign(this, {url, fetched, probed, errmsg, mediaLocation, mediaReferer, metadata});
     }
 }
 
@@ -14,7 +14,7 @@ const
     ffmpeg = require(`fluent-ffmpeg`),
     // ---------------------------------------------------------------------------------
     // Config module
-    {odoklassnikiHeaderbandAid, removeRangeBandAid, USER_AGENT, REFERER_RGX} = require(`./config`),
+    {odoklassnikiHeaderBandAid, removeRangeBandAid, USER_AGENT, REFERER_RGX} = require(`./config`),
     // ---------------------------------------------------------------------------------
     fetchMediaUrl = url =>
         // eslint-disable-next-line implicit-arrow-linebreak
@@ -38,7 +38,7 @@ const
                             // extract headers and final url from response
                             {responseHeaders, finalUrl} = metafetch,
                             // content type (odoklassniki/soundcloud band-aid lol)
-                            contentType = odoklassnikiHeaderbandAid(responseHeaders[`content-type`]);
+                            contentType = odoklassnikiHeaderBandAid(responseHeaders[`content-type`]);
                         // fetch fails if content type is not retrieved/evaluates to false ...
                         if (contentType) {
                             // in this case, the response body contains a redirection url
@@ -84,8 +84,7 @@ const
             ffmpeg
                 // probe input (provide input options as second argument)
                 // The cons of using the referer header outweigh the pros at the moment, so it will be disabled until further notice ...
-                // .ffprobe(resolvedUrl, [ `-user_agent`, `'${ USER_AGENT }'`, `-headers`, `'Referer: ${ referer }'` ], (err, metaprobe) => {
-                .ffprobe(resolvedUrl, [ `-user_agent`, `'${ USER_AGENT }'` ], (err, metaprobe) => {
+                .ffprobe(resolvedUrl, [ `-user_agent`, `'${ USER_AGENT }'`/* , `-headers`, `'Referer: ${ referer }'`*/ ], (err, metaprobe) => {
                     // increment progress bar
                     progBar.increment();
                     // return final result
@@ -103,7 +102,7 @@ const
                         // url to feed ffmpeg
                         mediaLocation: resolvedUrl,
                         // referer for the url
-                        locationReferer: referer,
+                        mediaReferer: referer,
                         // probe metadata
                         metadata: metaprobe
                     }));
