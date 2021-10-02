@@ -45,6 +45,7 @@ const
                         `-referer`, `${ referer }/`
                     ]);
                 // https://github.com/fluent-ffmpeg/node-fluent-ffmpeg/issues/1151
+                // https://github.com/fluent-ffmpeg/node-fluent-ffmpeg/pull/1152
                 /*
                     .inputOptions([
                         // no need to quote options values
@@ -64,6 +65,7 @@ const
                         `-referer`, `${ referer }/`
                     ]);
                 // https://github.com/fluent-ffmpeg/node-fluent-ffmpeg/issues/1151
+                // https://github.com/fluent-ffmpeg/node-fluent-ffmpeg/pull/1152
                 /*
                     .inputOptions([
                         // no need to quote options values
