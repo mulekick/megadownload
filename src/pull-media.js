@@ -44,14 +44,15 @@ const
                         `-user_agent`, `${ USER_AGENT }`,
                         `-referer`, `${ referer }/`
                     ]);
-                // wrapper option parsing behavior needs to be fixed before this is enabled
+                // https://github.com/fluent-ffmpeg/node-fluent-ffmpeg/issues/1151
                 /*
                     .inputOptions([
-                        `-headers`, `'Connection: keep-alive'`,
-                        `-headers`, `'Pragma: no-cache'`,
-                        `-headers`, `'Cache-Control: no-cache'`,
-                        `-headers`, `'User-Agent: ${ USER_AGENT }'`,
-                        `-headers`, `'Referer: ${ referer }/'`
+                        // no need to quote options values
+                        `-headers`, `Connection: keep-alive`,
+                        `-headers`, `Pragma: no-cache`,
+                        `-headers`, `Cache-Control: no-cache`,
+                        `-headers`, `User-Agent: ${ USER_AGENT }`,
+                        `-headers`, `Referer: ${ referer }/`
                     ]);
                 */
 
@@ -62,14 +63,15 @@ const
                         `-user_agent`, `${ USER_AGENT }`,
                         `-referer`, `${ referer }/`
                     ]);
-                // wrapper option parsing behavior needs to be fixed before this is enabled
+                // https://github.com/fluent-ffmpeg/node-fluent-ffmpeg/issues/1151
                 /*
                     .inputOptions([
-                        `-headers`, `'Connection: keep-alive'`,
-                        `-headers`, `'Pragma: no-cache'`,
-                        `-headers`, `'Cache-Control: no-cache'`,
-                        `-headers`, `'User-Agent: ${ USER_AGENT }'`,
-                        `-headers`, `'Referer: ${ referer }/'`
+                        // no need to quote options values
+                        `-headers`, `Connection: keep-alive`,
+                        `-headers`, `Pragma: no-cache`,
+                        `-headers`, `Cache-Control: no-cache`,
+                        `-headers`, `User-Agent: ${ USER_AGENT }`,
+                        `-headers`, `Referer: ${ referer }/`
                     ]);
                 */
 
