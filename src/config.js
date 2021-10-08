@@ -22,8 +22,7 @@ const
         // band aids
         vimeoUrlBandAid: x => x.replace(`.json?base64_init=1`, `.m3u8`),
 
-        // eslint-disable-next-line no-confusing-arrow
-        odoklassnikiHeaderBandAid: x => x === `audio/x-hx-aac-adts` ? `audio/aac` : /.*(?:x-mpegurl|audio\/mpegurl).*$/ui.test(x) ? `application/vnd.apple.mpegurl` : x,
+        odoklassnikiHeaderBandAid: x => (x === `audio/x-hx-aac-adts` ? `audio/aac` : /.*(?:x-mpegurl|audio\/mpegurl).*$/ui.test(x) ? `application/vnd.apple.mpegurl` : x),
 
         // remove byte range from urls
         removeRangeBandAid: x => x.replace(/&(?:range|bytes)=\d+-\d+/u, ``),

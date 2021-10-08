@@ -2,7 +2,6 @@
 
 class resolver {
     constructor({url = null, fetched = null, probed = null, errmsg = null, mediaLocation = null, mediaReferer = null, metadata = null} = {}) {
-        // eslint-disable-next-line object-curly-newline
         Object.assign(this, {url, fetched, probed, errmsg, mediaLocation, mediaReferer, metadata});
     }
 }
@@ -17,11 +16,9 @@ const
     {odoklassnikiHeaderBandAid, removeRangeBandAid, USER_AGENT, REFERER_RGX} = require(`./config`),
     // ---------------------------------------------------------------------------------
     fetchMediaUrl = (referer, url) =>
-        // eslint-disable-next-line implicit-arrow-linebreak
         new Promise(resolve  => {
             const
                 // create request
-                // eslint-disable-next-line prefer-object-spread
                 readbl = new FetchStream(url, {
                     headers: {
                         Connection: `keep-alive`,
@@ -50,8 +47,8 @@ const
                                     payloadUrl = ``;
                                 // ATTACH HANDLERS HERE
                                 readbl
-                                    // eslint-disable-next-line no-return-assign
-                                    .on(`data`, chunk => payloadUrl += chunk.toString(`utf8`))
+                                    // read url
+                                    .on(`data`, chunk => (payloadUrl += chunk.toString(`utf8`)))
                                     // resolve with an array containing content type and redirection url
                                     .on(`end`, () => resolve([ contentType, payloadUrl ]));
                             } else {
@@ -79,7 +76,6 @@ const
         }),
     // ---------------------------------------------------------------------------------
     probeMediaUrl = (referer, origUrl, resolvedUrl, progBar) =>
-        // eslint-disable-next-line implicit-arrow-linebreak
         new Promise(resolve  => {
             // probe media source ...
             ffmpeg

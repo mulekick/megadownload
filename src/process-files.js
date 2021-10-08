@@ -1,10 +1,8 @@
-/* eslint-disable no-confusing-arrow */
 /* eslint-disable prefer-template */
 'use strict';
 
 class probedMedia {
     constructor({referer = null, duration = null, audio = null, video = null, target = null, options = null} = {}) {
-        // eslint-disable-next-line object-curly-newline
         Object.assign(this, {referer, duration, audio, video, target, options});
     }
 }
@@ -171,18 +169,17 @@ const
                         {mediaLocation, mediaReferer, metadata: {format: {duration}, streams}} = x;
                     // add properties, spread, push in accumulator
                     r.push(...streams
-                        // reminder: target object comes first ...
-                        // also spread doesn't work on object literals ? (ES2018 noncompliant)
-                        // so this rule has to be disabled
-                        // eslint-disable-next-line prefer-object-spread
-                        .map(stream => Object.assign({
+                        // ES2018 object spread ...
+                        .map(stream => ({
                             // save url
                             _mediaLocation: mediaLocation,
                             // save referer
                             _mediaReferer: mediaReferer,
                             // save duration
-                            _mediaDuration: Number(duration)
-                        }, stream)));
+                            _mediaDuration: Number(duration),
+                            // spread stream properties into returned object (stream is left untouched)
+                            ...stream
+                        })));
                     // return
                     return r;
                 }, []);
@@ -423,7 +420,7 @@ const
             // log successful downloads
             eventLog =  `\n---------------------------------` +
                         `\n${ resultsArray
-                            .map(x => x[`transcodeSuccessful`] ? x[`savedFile`] : x[`errmsg`])
+                            .map(x => (x[`transcodeSuccessful`] ? x[`savedFile`] : x[`errmsg`]))
                             .join(`\n`) }` +
                         `\n---------------------------------` +
                         `\ndownloads completed.`;

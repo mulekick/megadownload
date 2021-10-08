@@ -1,9 +1,7 @@
-/* eslint-disable object-curly-newline */
 'use strict';
 
 class resolver {
     constructor({audioSrc = null, videoSrc = null, transcodeSuccessful = null, errmsg = null, savedFile = null, logFile = null} = {}) {
-        // eslint-disable-next-line object-curly-newline
         Object.assign(this, {audioSrc, videoSrc, transcodeSuccessful, errmsg, savedFile, logFile});
     }
 }
@@ -19,7 +17,6 @@ const
     {USER_AGENT, EVENT_RGX} = require(`./config`),
     // ---------------------------------------------------------------------------------
     pullMedia = (media, verbose) =>
-        // eslint-disable-next-line implicit-arrow-linebreak
         new Promise(resolve => {
             const
                 // extract referer, streams, target, options and progress bar
@@ -118,7 +115,6 @@ const
                 // transcoding error
                 .on(`error`, err => rm(target, {force: true}, () => {
                     // ensure all writes to log file are completed
-                    // eslint-disable-next-line max-nested-callbacks
                     tLog.closeLog(`\ntranscoding error occured: ${ err[`message`] }`, () => {
                         resolve(new resolver({audioSrc: audio ? audio[`_mediaLocation`] : null, videoSrc: video ? video[`_mediaLocation`] : null, transcodeSuccessful: false, errmsg: err[`message`], logFile: logfileName}));
                     });

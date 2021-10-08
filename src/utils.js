@@ -1,3 +1,4 @@
+/* eslint-disable prefer-template */
 /* eslint-disable lines-between-class-members */
 'use strict';
 
@@ -101,7 +102,6 @@ const
     // ---------------------------------------------------------------------------------
     // async url isolation
     extractUrls = file =>
-        // eslint-disable-next-line implicit-arrow-linebreak
         new Promise((resolve, reject) => {
             const
                 urls = [],
@@ -129,14 +129,12 @@ const
     // ---------------------------------------------------------------------------------
     // user confirmation
     confirmFetch = m =>
-        // eslint-disable-next-line implicit-arrow-linebreak
         new Promise((resolve, reject) => {
             createInterface({
                 input: process.stdin,
                 output: process.stdout
             })
-                // eslint-disable-next-line no-confusing-arrow
-                .question(`${ m }\n\nDo you want to pull the above media to your hard drive ? (Y/n) ?\n`, ans => ans === `Y` ? resolve() : reject(new Error(`operation canceled.`)));
+                .question(`${ m }\n\nDo you want to pull the above media to your hard drive ? (Y/n) ?\n`, ans => (ans === `Y` ? resolve() : reject(new Error(`operation canceled.`))));
         });
     // ---------------------------------------------------------------------------------
 
@@ -187,8 +185,7 @@ class output {
         // probe formatting
         const
             {referer, duration, audio, video, target} = x;
-        // eslint-disable-next-line prefer-template
-        return  chalk.rgb(...CLI_PROBE_COLOR)(
+        return chalk.rgb(...CLI_PROBE_COLOR)(
             `=================================` +
             `\n*********** PROBE ${ i + 1 } ************` +
             `\n=================================` +
@@ -199,7 +196,6 @@ class output {
             chalk.rgb(...CLI_SAVE_COLOR)(`\nfile\t${ target }`);
 
         /*
-        // eslint-disable-next-line prefer-template
         return  chalk.rgb(...CLI_PROBE_COLOR)(`MEDIA ${ i } FROM : ${ referer }`) +
                 `\n---------------------------------\n` +
                 chalk.rgb(...CLI_PROBE_COLOR)(`MEDIA DURATION : ${ duration }s`) +
@@ -315,5 +311,4 @@ class logger {
     // ---------------------------------------------------------------------------------
 }
 
-// eslint-disable-next-line object-curly-newline
 module.exports = {numSort, alphaSort, extractUrls, confirmFetch, megadownload, output, logger};
