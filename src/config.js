@@ -25,7 +25,7 @@ const
         odoklassnikiHeaderBandAid: x => (x === `audio/x-hx-aac-adts` ? `audio/aac` : /.*(?:x-mpegurl|audio\/mpegurl).*$/ui.test(x) ? `application/vnd.apple.mpegurl` : x),
 
         // remove byte range from urls
-        removeRangeBandAid: x => x.replace(/&(?:range|bytes)=\d+-\d+/u, ``),
+        removeRangeBandAid: x => x.replace(/&(?:range|bytes)=\d*-\d*/u, ``),
 
         // CLI colors
         CLI_PROBE_COLOR: [ 0, 255, 0 ],

@@ -128,7 +128,7 @@ const
         }),
     // ---------------------------------------------------------------------------------
     // user confirmation
-    confirmFetch = m =>
+    confirmDownloads = m =>
         new Promise((resolve, reject) => {
             createInterface({
                 input: process.stdin,
@@ -311,4 +311,4 @@ class logger {
     // ---------------------------------------------------------------------------------
 }
 
-module.exports = {numSort, alphaSort, extractUrls, confirmFetch, megadownload, output, logger};
+module.exports = {numSort, alphaSort, extractUrls, confirmDownloads, megadownload, output, logger};

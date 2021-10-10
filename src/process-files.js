@@ -14,7 +14,7 @@ const
     {uniqueNamesGenerator, adjectives, colors, languages, starWars} = require(`unique-names-generator`),
     {probeMedia} = require(`./probe-media`),
     {pullMedia} = require(`./pull-media`),
-    {numSort, alphaSort, extractUrls, confirmFetch, output, logger} = require(`./utils`),
+    {numSort, alphaSort, extractUrls, confirmDownloads, output, logger} = require(`./utils`),
     // ---------------------------------------------------------------------------------
     // Config module
     {vimeoUrlBandAid, MEDIA_FORMATS, VIDEO_CODEC_FILE_EXT, AUDIO_CODEC_FILE_EXT} = require(`./config`),
@@ -295,7 +295,7 @@ const
 
                 let
                     // init streams and options
-                    [ vidStr, audStr, cmdOpts, fformat ] = [ null, null, [], [], [], [], null ];
+                    [ vidStr, audStr, cmdOpts, fformat ] = [ null, null, [], null ];
 
                 // isolate audio stream
                 audStr = mediaStreams
@@ -390,7 +390,7 @@ const
             pLog.writeLog(eventLog);
 
             // wait for user confirmation
-            await confirmFetch(eventLog);
+            await confirmDownloads(eventLog);
 
             // hold the line
             process.stdout.write(`\npulling media from the internet, please wait ...`);
