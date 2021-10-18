@@ -50,7 +50,14 @@ const
                                     // read url
                                     .on(`data`, chunk => (payloadUrl += chunk.toString(`utf8`)))
                                     // resolve with an array containing content type and redirection url
-                                    .on(`end`, () => resolve([ contentType, payloadUrl ]));
+                                    .on(`end`, () => {
+                                        if (payloadUrl.length)
+                                            // if payload length is not null, continue
+                                            resolve([ contentType, payloadUrl ]);
+                                        else
+                                            // if payload length is null, fail
+                                            resolve(new resolver({url: url, fetched: false, probed: false, errmsg: `failed to fetch: server returned an empty payload`}));
+                                    });
                             } else {
                                 // ditch data
                                 readbl.resume();
