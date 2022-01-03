@@ -12,7 +12,7 @@ const
     progress = require(`cli-progress`),
     // ---------------------------------------------------------------------------------
     // Config module
-    {CLI_PROBE_COLOR, CLI_SAVE_COLOR, MEDIA_MIN_DURATION, MEDIA_MIN_STREAMS, PROCESS_LOG_FILE, PATH_RGX, ISOLATION_RGX} = require(`./config`),
+    {CLI_PROBE_COLOR, CLI_SAVE_COLOR, MEDIA_MIN_DURATION, MEDIA_MIN_STREAMS, DEFAULT_DOWNLOAD_DIR, PROCESS_LOG_FILE, PATH_RGX, ISOLATION_RGX} = require(`./config`),
     // ---------------------------------------------------------------------------------
     // file system writable options
     wsopts = {
@@ -149,7 +149,7 @@ class megadownload {
                 .name(`megadownload`)
                 // required
                 .requiredOption(`-i, --input-files <inputFiles...>`, `space-separated list of input files (http sessions or HAR files)`)
-                .requiredOption(`-o, --output-dir <outputDir>`, `downloaded files / logs directory path`, validFilePath)
+                .requiredOption(`-o, --output-dir <outputDir>`, `downloaded files / logs directory path`, validFilePath, DEFAULT_DOWNLOAD_DIR)
                 // other
                 .option(`-d, --min-duration <minDuration>`, `minimum duration in seconds for a media to be downloaded`, validMinDuration, MEDIA_MIN_DURATION)
                 .option(`-n, --min-streams <minStreams>`, `minimum number of streams in a media to be downloaded`, validMinStreams, MEDIA_MIN_STREAMS)

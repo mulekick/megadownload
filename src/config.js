@@ -58,8 +58,11 @@ const
             [`MP3 (MPEG audio layer 3)`]: `mp3`
         },
 
+        // default download directory
+        DEFAULT_DOWNLOAD_DIR: process.cwd(),
+
         // default process log file
-        PROCESS_LOG_FILE: `logs/${ new Date().getTime() }.megadownload.log`,
+        PROCESS_LOG_FILE: `${ process.cwd() }/${ new Date().getTime() }.megadownload.log`,
 
         // file path validation
         PATH_RGX: /^\/?(?<path>(?:(?:[^/\s]+|'[^/']+'|"[^/"]+")\/)*)(?<file>[^/\s]+|'[^/']+'|"[^/"]+"){1}$/u,
