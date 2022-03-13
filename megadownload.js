@@ -23,8 +23,8 @@ try {
 } catch (err) {
 
     // output message to stderr
-    process.stderr.write(`\n---------------------------------`);
-    process.stderr.write(`\nerror occured: ${ err.message }`);
+    process.stderr.write(`---------------------------------\n`);
+    process.stderr.write(`error occured: ${ err.message }\n`);
     process.stderr.write(`\n`);
 
     // return error code

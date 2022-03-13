@@ -19,7 +19,7 @@ const
     // Config module
     {odoklassnikiHeaderBandAid, removeRangeBandAid, headerMatchName, USER_AGENT, REFERER_RGX} = require(`./config`),
     // ---------------------------------------------------------------------------------
-    fetchMediaUrl = (referer, url) =>
+    fetchMediaUrl = url =>
         new Promise(resolve  => {
 
             const
@@ -182,7 +182,7 @@ const
             // extract host
             [ referer ] = match === null ? [ `unknown` ] : match.slice(1),
             // await media url resolution
-            fetchResult = await fetchMediaUrl(referer, url);
+            fetchResult = await fetchMediaUrl(url);
 
         // url resolution fails
         if (fetchResult instanceof resolver) {

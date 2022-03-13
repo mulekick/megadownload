@@ -185,14 +185,14 @@ class output {
         const
             {referer, duration, audio, video, target} = x;
         return chalk.rgb(...CLI_PROBE_COLOR)(
-            `=================================` +
-            `\n*********** PROBE ${ i + 1 } ************` +
-            `\n=================================` +
-            `\nsource\t${ referer }`) +
-            `\nlength\t${ duration }s` +
-            (video === null ? `` : `\nvideo\t${ video[`width`] }x${ video[`height`] } px, ${ isNaN(video[`bit_rate`]) ? `n/a` : video[`bit_rate`] / 1000 } kbps`) +
-            (audio === null ? `` : `\naudio\t${ audio[`channel_layout`] }, ${ isNaN(audio[`sample_rate`]) ? `n/a` : audio[`sample_rate`] / 1000 } kHz`) +
-            chalk.rgb(...CLI_SAVE_COLOR)(`\nfile\t${ target }`);
+            `=================================\n` +
+            `*********** PROBE ${ i + 1 } ************\n` +
+            `=================================\n` +
+            `source\t${ referer }\n`) +
+            `length\t${ duration }s\n` +
+            (video === null ? `` : `video\t${ video[`width`] }x${ video[`height`] } px, ${ isNaN(video[`bit_rate`]) ? `n/a` : video[`bit_rate`] / 1000 } kbps\n`) +
+            (audio === null ? `` : `audio\t${ audio[`channel_layout`] }, ${ isNaN(audio[`sample_rate`]) ? `n/a` : audio[`sample_rate`] / 1000 } kHz\n`) +
+            chalk.rgb(...CLI_SAVE_COLOR)(`file\t${ target }\n`);
 
         /*
         return  chalk.rgb(...CLI_PROBE_COLOR)(`MEDIA ${ i } FROM : ${ referer }`) +

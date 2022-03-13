@@ -339,8 +339,8 @@ const
                     break;
                 case vidStr :
                     // log media streams
-                    eventLog =  `\nvideo stream codec: ${ vidStr[`codec_long_name`] }` +
-                                `\nsave file extension is not configured for the above codec, current media will be discarded 😭.`;
+                    eventLog =  `video stream codec: ${ vidStr[`codec_long_name`] }\n` +
+                                `save file extension is not configured for the above codec, current media will be discarded 😭.\n`;
                     // output
                     pLog.writeLog(eventLog);
                     // proceed to next media
@@ -352,8 +352,8 @@ const
                     break;
                 case audStr :
                     // log media streams
-                    eventLog =  `\naudio stream codec: ${ audStr[`codec_long_name`] }` +
-                                `\nsave file extension is not configured for the above codec, current media will be discarded 😭.`;
+                    eventLog =  `audio stream codec: ${ audStr[`codec_long_name`] }\n` +
+                                `save file extension is not configured for the above codec, current media will be discarded 😭.\n`;
                     // output
                     pLog.writeLog(eventLog);
                     // proceed to next media
@@ -376,9 +376,12 @@ const
 
             }
 
-            // no successful probes, exit
-            if (successfulProbes.length === 0)
+            if (successfulProbes.length === 0) {
+                // presentation
+                process.stdout.write(`\n`);
+                // no successful probes, exit
                 throw new Error(`no successful probes could be performed on the selected session, exiting.`);
+            }
 
             // log successful probes
             eventLog =  `---------------------------------\n` +
@@ -395,7 +398,7 @@ const
             await confirmDownloads(eventLog);
 
             // hold the line
-            process.stdout.write(`\npulling media from the internet, please wait ...`);
+            process.stdout.write(`pulling media from the internet, please wait ...\n`);
 
             // start progress bars
             pOut.startDownloadBars();
@@ -420,12 +423,12 @@ const
             pOut.stopAllDownloadBars();
 
             // log successful downloads
-            eventLog =  `\n---------------------------------` +
-                        `\n${ resultsArray
+            eventLog =  `---------------------------------\n` +
+                        `${ resultsArray
                             .map(x => (x[`transcodeSuccessful`] ? x[`savedFile`] : x[`errmsg`]))
-                            .join(`\n`) }` +
-                        `\n---------------------------------` +
-                        `\ndownloads completed.`;
+                            .join(`\n`) }\n` +
+                        `---------------------------------\n` +
+                        `downloads completed.\n`;
 
             // output
             pLog.writeLog(eventLog);
@@ -436,8 +439,8 @@ const
             // wait for the logger to complete the writes ...
             await pLog.writesCompleted();
 
-            process.stdout.write(`\n---------------------------------`);
-            process.stdout.write(`\ndone.`);
+            process.stdout.write(`---------------------------------\n`);
+            process.stdout.write(`done.\n`);
             process.stdout.write(`\n`);
 
             // return success code
@@ -445,8 +448,8 @@ const
 
         } catch (err) {
             // output message to stderr
-            process.stderr.write(`\n---------------------------------`);
-            process.stderr.write(`\nerror occured: ${ err.message }`);
+            process.stderr.write(`---------------------------------\n`);
+            process.stderr.write(`error occured: ${ err.message }\n`);
             process.stderr.write(`\n`);
 
             // output

@@ -83,9 +83,9 @@ const
             // set event listeners for command
             ffcmd
                 // CLI command output
-                .on(`start`, cmd => tLog.writeLog(`\nffmpeg spawned:\n${ cmd }`))
+                .on(`start`, cmd => tLog.writeLog(`ffmpeg spawned:\n${ cmd }\n`))
                 // input codec data
-                .on(`codecData`, o => tLog.writeLog(`\ninput codec data: ${ JSON.stringify(o) }`))
+                .on(`codecData`, o => tLog.writeLog(`input codec data: ${ JSON.stringify(o) }\n`))
                 // transcoding events
                 .on(`stderr`, msg => {
                     const
@@ -108,14 +108,14 @@ const
                     bar.update(duration);
                     bar.stop();
                     // ensure all writes to log file are completed
-                    tLog.closeLog(`\ntranscoding succeeded.`, () => {
+                    tLog.closeLog(`transcoding succeeded.\n`, () => {
                         resolve(new resolver({audioSrc: audio ? audio[`_mediaLocation`] : null, videoSrc: video ? video[`_mediaLocation`] : null, transcodeSuccessful: true, savedFile: target, logFile: logfileName}));
                     });
                 })
                 // transcoding error
                 .on(`error`, err => rm(target, {force: true}, () => {
                     // ensure all writes to log file are completed
-                    tLog.closeLog(`\ntranscoding error occured: ${ err[`message`] }`, () => {
+                    tLog.closeLog(`transcoding error occured: ${ err[`message`] }\n`, () => {
                         resolve(new resolver({audioSrc: audio ? audio[`_mediaLocation`] : null, videoSrc: video ? video[`_mediaLocation`] : null, transcodeSuccessful: false, errmsg: err[`message`], logFile: logfileName}));
                     });
                 }));
