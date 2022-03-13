@@ -9,34 +9,57 @@ class resolver {
 const
     // ---------------------------------------------------------------------------------
     // load modules
-    {FetchStream} = require(`fetch`),
     ffmpeg = require(`fluent-ffmpeg`),
+    {Curl, CurlFeature} = require(`node-libcurl`),
+    // features constants
+    {StreamResponse} = CurlFeature,
+    // options constants
+    {URL, USERAGENT, FOLLOWLOCATION, AUTOREFERER, MAXREDIRS, CONNECTTIMEOUT, NOPROGRESS, VERBOSE} = Curl.option,
     // ---------------------------------------------------------------------------------
     // Config module
-    {odoklassnikiHeaderBandAid, removeRangeBandAid, USER_AGENT, REFERER_RGX} = require(`./config`),
+    {odoklassnikiHeaderBandAid, removeRangeBandAid, headerMatchName, USER_AGENT, REFERER_RGX} = require(`./config`),
     // ---------------------------------------------------------------------------------
     fetchMediaUrl = (referer, url) =>
         new Promise(resolve  => {
+
             const
-                // create request
-                readbl = new FetchStream(url, {
-                    headers: {
-                        Connection: `keep-alive`,
-                        Pragma: `no-cache`,
-                        'Cache-Control': `no-cache`,
-                        'User-Agent': `${ USER_AGENT }`,
-                        Referer: `${ referer }/`
-                    }
-                });
-            readbl
-                .on(`meta`, metafetch => {
+                // create instance
+                curl = new Curl();
+
+            // set options
+            curl
+                // target url
+                .setOpt(URL, url)
+                // user agent
+                .setOpt(USERAGENT, USER_AGENT)
+                // automatically follow redirections
+                .setOpt(FOLLOWLOCATION, true)
+                // automatically add referer header on redirection
+                .setOpt(AUTOREFERER, true)
+                // follow redirections ad infinitum
+                .setOpt(MAXREDIRS, -1)
+                // set timeout
+                .setOpt(CONNECTTIMEOUT, 10)
+                // no progress bar
+                .setOpt(NOPROGRESS, true)
+                // quiet
+                .setOpt(VERBOSE, false);
+
+            // stream response
+            curl.enable(StreamResponse);
+
+            curl
+                // receive payload as a readable stream
+                .on(`stream`, (readable, statusCode, headers) => {
+                    // reverse headers
+                    headers.reverse();
                     // server accepts request
-                    if (metafetch[`status`] === 200) {
+                    if (statusCode === 200) {
                         const
-                            // extract headers and final url from response
-                            {responseHeaders, finalUrl} = metafetch,
-                            // content type (odoklassniki/soundcloud band-aid lol)
-                            contentType = odoklassnikiHeaderBandAid(responseHeaders[`content-type`]);
+                            // manage content type header name
+                            contentTypeHeaderName = headerMatchName([ `Content-Type`, `content-type` ], headers[0]),
+                            // fail if content type header is missing
+                            contentType = typeof contentTypeHeaderName === `undefined` ? false : odoklassnikiHeaderBandAid(headers[0][contentTypeHeaderName]);
                         // fetch fails if content type is not retrieved/evaluates to false ...
                         if (contentType) {
                             // in this case, the response body contains a redirection url
@@ -46,9 +69,9 @@ const
                                     // reset to string
                                     payloadUrl = ``;
                                 // ATTACH HANDLERS HERE
-                                readbl
+                                readable
                                     // read url
-                                    .on(`data`, chunk => (payloadUrl += chunk.toString(`utf8`)))
+                                    .on(`data`, chunk => (payloadUrl += chunk))
                                     // resolve with an array containing content type and redirection url
                                     .on(`end`, () => {
                                         if (payloadUrl.length)
@@ -56,30 +79,65 @@ const
                                             resolve([ contentType, payloadUrl ]);
                                         else
                                             // if payload length is null, fail
-                                            resolve(new resolver({url: url, fetched: false, probed: false, errmsg: `failed to fetch: server returned an empty payload`}));
+                                            resolve(new resolver({url: url, fetched: true, probed: false, errmsg: `failed to complete fetch: server returned an empty payload`}));
+                                    })
+                                    // done, terminate instance
+                                    .on(`close`, () => curl.close())
+                                    // setup error handler
+                                    .on(`error`, err => {
+                                        // if readable emits an error, fail
+                                        resolve(new resolver({url: url, fetched: true, probed: false, errmsg: `failed to complete fetch: readable stream emitted ${ err[`message`] }`}));
+                                        // done, terminate instance
+                                        curl.close();
                                     });
                             } else {
-                                // ditch data
-                                readbl.resume();
-                                // resolve with an array containing content type and final url
-                                resolve([ contentType, finalUrl ]);
+                                const
+                                    // extract final url from headers
+                                    redirect = headers.find(x => x[`result`][`code`] === 302);
+                                // no redirection occured
+                                if (typeof redirect === `undefined`) {
+                                    // resolve with an array containing content type and original url
+                                    resolve([ contentType, url ]);
+                                // request was redirected
+                                } else {
+                                    const
+                                        // manage location header name
+                                        locationHeaderName = headerMatchName([ `Location`, `location` ], redirect);
+                                    // eslint-disable-next-line max-depth
+                                    if (typeof locationHeaderName === `undefined`)
+                                        // response header is missing, fail
+                                        resolve(new resolver({url: url, fetched: true, probed: false, errmsg: `failed to retrieve location response header folowing redirection`}));
+                                    else
+                                        // resolve with an array containing content type and redirected url
+                                        resolve([ contentType, redirect[locationHeaderName] ]);
+                                }
+                                // destroy readable to free internal resources and allow the process to end
+                                readable.destroy();
                             }
                         } else {
-                            // ditch data
-                            readbl.resume();
                             // reject
                             resolve(new resolver({url: url, fetched: true, probed: false, errmsg: `failed to retrieve content type`}));
+                            // destroy readable to free internal resources and allow the process to end
+                            readable.destroy();
                         }
                     // server refuses request
                     } else {
                         // no http readable retrieved, reject
-                        resolve(new resolver({url: url, fetched: false, probed: false, errmsg: `failed to retrieve response headers: remote server returned code ${ metafetch[`status`] }`}));
+                        resolve(new resolver({url: url, fetched: false, probed: false, errmsg: `failed to retrieve response headers: remote server returned code ${ String(statusCode) }`}));
+                        // done, terminate instance
+                        curl.close();
                     }
                 })
-                .on(`error`, err => {
-                    // reject
-                    resolve(new resolver({url: url, fetched: false, probed: false, errmsg: err[`message`]}));
-                });
+                .on(`error`, (err, code) => {
+                    // ignore 'readable unexpectedly destroyed' errors since resolve() has already been called at this stage
+                    if (code !== 42)
+                        // reject
+                        resolve(new resolver({url: url, fetched: false, probed: false, errmsg: err[`message`]}));
+                    // done, terminate instance
+                    curl.close();
+                })
+                // execute
+                .perform();
         }),
     // ---------------------------------------------------------------------------------
     probeMediaUrl = (referer, origUrl, resolvedUrl, progBar) =>

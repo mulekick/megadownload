@@ -12,7 +12,7 @@ const
     progress = require(`cli-progress`),
     // ---------------------------------------------------------------------------------
     // Config module
-    {CLI_PROBE_COLOR, CLI_SAVE_COLOR, MEDIA_MIN_DURATION, MEDIA_MIN_STREAMS, DEFAULT_DOWNLOAD_DIR, PROCESS_LOG_FILE, PATH_RGX, ISOLATION_RGX} = require(`./config`),
+    {CLI_PROBE_COLOR, CLI_SAVE_COLOR, MEDIA_MIN_DURATION, MEDIA_MIN_STREAMS, DEFAULT_DOWNLOAD_DIR, PATH_RGX, ISOLATION_RGX} = require(`./config`),
     // ---------------------------------------------------------------------------------
     // file system writable options
     wsopts = {
@@ -158,7 +158,6 @@ class megadownload {
                 // debug
                 .option(`-u, --dump-urls`, `parse input files, list urls selected for probing and exit`, false)
                 .option(`-v, --verbose`, `write log files for main process as well as for download/transcode processes`, false)
-                .option(`-f, --log-file <logFile>`, `specify main process log file path`, validFilePath, PROCESS_LOG_FILE)
                 // init
                 .parse(this.input)
                 .opts();

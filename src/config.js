@@ -27,13 +27,16 @@ const
         // remove byte range from urls
         removeRangeBandAid: x => x.replace(/&(?:range|bytes)=\d*-\d*/u, ``),
 
+        // return first matching response header name
+        headerMatchName: (x, h) => x.find(y => Object.prototype.hasOwnProperty.call(h, y)),
+
         // CLI colors
         CLI_PROBE_COLOR: [ 0, 255, 0 ],
 
         CLI_SAVE_COLOR: [ 255, 95, 0 ],
 
         // default user agent (quote when using command line options because of ffmpeg wrapper parsing behavior)
-        USER_AGENT: `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36`,
+        USER_AGENT: `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36`,
         // USER_AGENT: `Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1`,
 
         // min. media duration (seconds)
@@ -60,9 +63,6 @@ const
 
         // default download directory
         DEFAULT_DOWNLOAD_DIR: process.cwd(),
-
-        // default process log file
-        PROCESS_LOG_FILE: `${ process.cwd() }/${ new Date().getTime() }.megadownload.log`,
 
         // file path validation
         PATH_RGX: /^\/?(?<path>(?:(?:[^/\s]+|'[^/']+'|"[^/"]+")\/)*)(?<file>[^/\s]+|'[^/']+'|"[^/"]+"){1}$/u,

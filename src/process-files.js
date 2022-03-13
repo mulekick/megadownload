@@ -21,11 +21,13 @@ const
     // ---------------------------------------------------------------------------------
     // program options
     // eslint-disable-next-line complexity
-    processFiles = async({inputFiles, outputDir, minDuration, minStreams, audioOnly, extensive, dumpUrls, verbose, logFile}) => {
+    processFiles = async({inputFiles, outputDir, minDuration, minStreams, audioOnly, extensive, dumpUrls, verbose}) => {
 
         const
             // ---------------------------------------------------------------------------------
-            // file system log
+            // main process log
+            logFile = `${ outputDir }/${ new Date().getTime() }.megadownload.log`,
+            // init log file
             pLog = new logger({
                 // logger being instantiated with null as logFile will result in logs being discarded ...
                 logFile: verbose ? logFile : null,
