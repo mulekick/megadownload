@@ -72,7 +72,6 @@ const
         REFERER_RGX: /^(?<referer>http|https:\/\/(?:[a-zA-Z0-9-]+\.)+[a-zA-Z0-9-]+)(?::\d+)?\/[^ "]+$/u,
 
         // url isolation
-        // ISOLATION_RGX: /(?:http|https):\/\/(?:[a-zA-Z0-9-]+\.)+[a-zA-Z0-9-]+(?::\d+)?\/[^ '"\s]*(?:(?:\.|\/)m3u8|(?:\.|video_)mp4|\W\d{3,4}(?:(?:p\W)|\?)|videoplayback\?|master\.json\?base64_init=1|\/streams\/|talk\/hls\/|\.mpd\W)[^ `'"\s\\\]]*/gu,
         ISOLATION_RGX: /(?:http|https):\/\/(?:[a-zA-Z0-9-]+\.)+[a-zA-Z0-9-]+(?::\d+)?\/[^ '"\s]*(?:(?:\.|\/)m3u8|(?:\.|video_)mp4|\W\d{3,4}(?:(?:p\W)|\?)|videoplayback\?|\?expires=\d{13}&srcIp=|master\.json\?base64_init=1|\/streams\/|talk\/hls\/|\.mpd\W)[^ `'"\s\\\]]*/gu,
 
         // transcoding events

@@ -1,0 +1,37 @@
+This program was successfully tested on the following platforms :
+
+archive.org
+bitchute.com
+d.tube
+dailymotion.com
+dlive.tv (vods and clips, not live streams)
+ishare.rediff.com
+newgrounds.com
+odysee.com
+ok.ru (see footnote)
+pbs.org
+play.tudou.com
+rutube.ru
+soundcloud.com
+tf1.fr
+tiktok.com
+twitch.tv (vods and clips, not live streams)
+utreon.com
+v.youku.com
+videa.hu
+videoshub.com
+vimeo.com
+youtube.com
+
+When downloading from ok.ru, there's a small trick to apply :
+
+- open the video url in your browser 
+- open developer tools (F12)
+- toggle device to mobile in developer tools
+- prepend m. to the url and validate to load the mobile version
+- press play to retrieve the m3u8 playlist
+- save everything as HAR, and you're good to go
+
+The mobile version has to be loaded for the download to succeed. Reason is that
+FFMPEG cannot process the DASH manifests used in the default version because of
+this single annoying issue : https://trac.ffmpeg.org/ticket/7395 😡

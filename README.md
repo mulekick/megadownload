@@ -1,6 +1,6 @@
 # Megadownload
 
-*[Browse the internet for content you like](https://raw.githubusercontent.com/mulekick/megadownload/master/platformslist) and save it to your local hard drive in minutes. Save bandwidth and free yourself of ads.*
+*[Browse the internet for content you like](https://raw.githubusercontent.com/mulekick/megadownload/master/platforms.list) and save it to your local hard drive in minutes. Save bandwidth and free yourself of ads.*
 
 ## Contents
 - [Prerequisites](#prerequisites)
@@ -44,7 +44,7 @@
 ### Create a HTTP session file
    - Open your web browser and launch developer tools (F12).
    - Start recording your HTTP session (click 'Network' tab, then Ctrl+E to start/stop recording).
-   - Go to [your favorite platforms](https://raw.githubusercontent.com/mulekick/megadownload/master/platformslist) and watch/listen to content.
+   - Go to [your favorite platforms](https://raw.githubusercontent.com/mulekick/megadownload/master/platforms.list) and watch/listen to content.
    - Once done, save your HTTP session to a .har file ('Network' tab, 'All', right click any item then 'Save all as HAR with content').
 
 ### Run the program
