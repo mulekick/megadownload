@@ -14,7 +14,7 @@ const
     // features constants
     {StreamResponse} = CurlFeature,
     // options constants
-    {URL, USERAGENT, FOLLOWLOCATION, AUTOREFERER, MAXREDIRS, CONNECTTIMEOUT, NOPROGRESS, VERBOSE} = Curl.option,
+    {URL, USERAGENT, FOLLOWLOCATION, AUTOREFERER, MAXREDIRS, CONNECTTIMEOUT, TIMEOUT, NOPROGRESS, VERBOSE} = Curl.option,
     // ---------------------------------------------------------------------------------
     // Config module
     {odoklassnikiHeaderBandAid, removeRangeBandAid, headerMatchName, USER_AGENT, REFERER_RGX} = require(`./config`),
@@ -38,8 +38,10 @@ const
                 .setOpt(AUTOREFERER, true)
                 // follow redirections ad infinitum
                 .setOpt(MAXREDIRS, -1)
-                // set timeout
+                // set connection timeout
                 .setOpt(CONNECTTIMEOUT, 10)
+                // set operation timeout
+                .setOpt(TIMEOUT, 30)
                 // no progress bar
                 .setOpt(NOPROGRESS, true)
                 // quiet

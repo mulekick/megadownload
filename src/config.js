@@ -46,7 +46,7 @@ const
         MEDIA_MIN_STREAMS: 1,
 
         // media formats (consider the probe a success if ffprobe returns those formats)
-        MEDIA_FORMATS: [ `Apple HTTP Live Streaming`, `Dynamic Adaptive Streaming over HTTP`, `QuickTime / MOV`, `Matroska / WebM` ],
+        MEDIA_FORMATS: [ `Apple HTTP Live Streaming`, `Dynamic Adaptive Streaming over HTTP`, `QuickTime / MOV`, `Matroska / WebM`, `MPEG-TS (MPEG-2 Transport Stream)` ],
 
         // file extensions by encoder name (all support the -c copy option on ffmpeg) ...
         VIDEO_CODEC_FILE_EXT: {
