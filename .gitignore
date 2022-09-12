@@ -1,0 +1,12 @@
+# exclude node modules
+node_modules
+# exclude package-lock.json
+package-lock.json
+# exclude eslint config
+.eslint*
+# exclude logs
+logs
+# exclude debug files
+.vscode
+# exclude test files
+test*

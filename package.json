@@ -1,0 +1,21 @@
+{
+    "name": "megadownload",
+    "version": "1.1.0",
+    "description": "automatically download video/audio files from your http sessions",
+    "type": "module",
+    "scripts": {},
+    "dependencies": {
+        "chalk": "^5.0.1",
+        "cli-progress": "^3.11.2",
+        "commander": "^9.4.0",
+        "fluent-ffmpeg": "^2.1.2",
+        "node-libcurl": "^2.3.4",
+        "unique-names-generator": "^4.7.1"
+    },
+    "engines": {
+        "node": ">=16.16.0",
+        "npm": ">=8.15.1"
+    },
+    "author": "mulekick <moolekick@gmail.com> (https://github.com/mulekick)",
+    "license": "MIT"
+}
