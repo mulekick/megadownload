@@ -1,14 +1,17 @@
 #!/usr/bin/env node
 
+// import primitives
+import process from "node:process";
+
 // import modules
-import {megadownload} from "./src/utils.js";
-import {processFiles} from "./src/process-files.js";
+import Megadownload from "./src/mg.js";
+import processFiles from "./src/process-files.js";
 
 try {
 
     const
         // ---------------------------------------------------------------------------------
-        mgdl = new megadownload({input: process.argv}),
+        mgdl = new Megadownload({input: process.argv}),
         opts = mgdl.getOptions();
         // ---------------------------------------------------------------------------------
 

@@ -1,16 +1,20 @@
+/* eslint-disable no-continue */
 /* eslint-disable prefer-template */
 
 // import primitives
-import {rm} from "fs";
+import process from "node:process";
+import {rm} from "node:fs";
 
 // import modules
 import {uniqueNamesGenerator, adjectives, colors, languages, starWars} from "unique-names-generator";
-import {probeMedia} from "./probe-media.js";
-import {pullMedia} from "./pull-media.js";
-import {numSort, alphaSort, extractUrls, confirmDownloads, output, logger} from "./utils.js";
-import config from "./config.js";
+import probeMedia from "./probe-media.js";
+import pullMedia from "./pull-media.js";
+import Logger from "./logger.js";
+import Output from "./output.js";
+import {numSort, alphaSort, extractUrls, confirmDownloads} from "./utils.js";
+import {vimeoUrlBandAid, MEDIA_FORMATS, VIDEO_CODEC_FILE_EXT, AUDIO_CODEC_FILE_EXT} from "./config.js";
 
-class probedMedia {
+class ProbedMedia {
     constructor({referer = null, duration = null, audio = null, video = null, target = null, options = null} = {}) {
         Object.assign(this, {referer, duration, audio, video, target, options});
     }
@@ -18,11 +22,8 @@ class probedMedia {
 
 const
     // ---------------------------------------------------------------------------------
-    // destructure properties from default export
-    {vimeoUrlBandAid, MEDIA_FORMATS, VIDEO_CODEC_FILE_EXT, AUDIO_CODEC_FILE_EXT} = config,
-    // ---------------------------------------------------------------------------------
     // program options
-    // eslint-disable-next-line complexity
+    // eslint-disable-next-line complexity, max-lines-per-function, max-statements
     processFiles = async({inputFiles, outputDir, minDuration, minStreams, audioOnly, extensive, dumpUrls, verbose}) => {
 
         const
@@ -30,14 +31,14 @@ const
             // main process log
             logFile = `${ outputDir }/${ new Date().getTime() }.megadownload.log`,
             // init log file
-            pLog = new logger({
+            pLog = new Logger({
                 // logger being instantiated with null as logFile will result in logs being discarded ...
                 logFile: verbose ? logFile : null,
                 cbError: err => rm(logFile, {force: true}, () => process.stderr.write(err[`message`]))
             }),
             // ---------------------------------------------------------------------------------
             // stdout log
-            pOut = new output({});
+            pOut = new Output({});
             // ---------------------------------------------------------------------------------
 
         try {
@@ -72,11 +73,11 @@ const
                 .sort();
 
             // log urls to process
-            eventLog =  `---------------------------------\n` +
-                        `TOTAL URLS : ${ resultsArray.length }\n` +
-                        `---------------------------------\n` +
-                        resultsArray
-                            .join(`\n`);
+            eventLog = `---------------------------------\n` +
+                       `TOTAL URLS : ${ resultsArray.length }\n` +
+                       `---------------------------------\n` +
+                       resultsArray
+                           .join(`\n`);
 
             // output
             pLog.writeLog(eventLog);
@@ -148,18 +149,18 @@ const
 
 
             // log failed fetches and probes
-            eventLog =  `---------------------------------\n` +
-                        `FAILED FETCHES : ${ failedFetches.length }\n` +
-                        failedFetches
-                            .join(`\n`) +
-                        `---------------------------------\n` +
-                        `FAILED PROBES : ${ failedProbes.length }\n` +
-                        failedProbes
-                            .join(`\n`) +
-                        `---------------------------------\n` +
-                        `INVALID PROBES : ${ invalidProbes.length }\n` +
-                        invalidProbes
-                            .join(`\n`);
+            eventLog = `---------------------------------\n` +
+                       `FAILED FETCHES : ${ failedFetches.length }\n` +
+                       failedFetches
+                           .join(`\n`) +
+                       `---------------------------------\n` +
+                       `FAILED PROBES : ${ failedProbes.length }\n` +
+                       failedProbes
+                           .join(`\n`) +
+                       `---------------------------------\n` +
+                       `INVALID PROBES : ${ invalidProbes.length }\n` +
+                       invalidProbes
+                           .join(`\n`);
 
             // output
             pLog.writeLog(eventLog);
@@ -231,11 +232,11 @@ const
             }
 
             // isolate individual media
-            while (streamz[0]) {
+            while (streamz.at(0)) {
 
                 const
                     // extract first stream attributes
-                    {_mediaLocation, _mediaReferer, _mediaDuration} = streamz[0];
+                    {_mediaLocation, _mediaReferer, _mediaDuration} = streamz.at(0);
 
                 let
                     // init variables
@@ -284,15 +285,15 @@ const
                     });
 
                 // log media streams
-                eventLog =  `---------------------------------\n` +
-                            `CURRENT MEDIA STREAMS : ${ mediaStreams.length }\n` +
-                            mediaStreams
-                                .map(x => `source: ${ x[`_mediaReferer`] }, ` +
-                                          `duration: ${ x[`_mediaDuration`] }s, ` +
-                                          `codec type: ${ x[`codec_type`] }, ${ x[`codec_type`] === `video` ? `frame size: ${ x[`width`] } x ${ x[`height`] }` : x[`codec_type`] === `audio` ? `sample rate: ${ x[`sample_rate`] }` : `unknown codec type` }, ` +
-                                          `bit rate: ${ x[`bit_rate`] }, ` +
-                                          `stream duration: ${ x[`duration`] }s`)
-                                .join(`\n`);
+                eventLog = `---------------------------------\n` +
+                           `CURRENT MEDIA STREAMS : ${ mediaStreams.length }\n` +
+                           mediaStreams
+                               .map(x => `source: ${ x[`_mediaReferer`] }, ` +
+                                         `duration: ${ x[`_mediaDuration`] }s, ` +
+                                         `codec type: ${ x[`codec_type`] }, ${ x[`codec_type`] === `video` ? `frame size: ${ x[`width`] } x ${ x[`height`] }` : x[`codec_type`] === `audio` ? `sample rate: ${ x[`sample_rate`] }` : `unknown codec type` }, ` +
+                                         `bit rate: ${ x[`bit_rate`] }, ` +
+                                         `stream duration: ${ x[`duration`] }s`)
+                               .join(`\n`);
 
                 // output
                 pLog.writeLog(eventLog);
@@ -304,12 +305,12 @@ const
                 // isolate audio stream
                 audStr = mediaStreams
                     // sort streams by highest bitrate
-                    .sort((a, b) => numSort(a, b, `sample_rate`))[0];
+                    .sort((a, b) => numSort(a, b, `sample_rate`)).at(0);
 
                 // isolate video stream
                 vidStr = mediaStreams
                     // sort streams by height
-                    .sort((a, b) => numSort(a, b, `height`))[0];
+                    .sort((a, b) => numSort(a, b, `height`)).at(0);
 
                 switch (true) {
                 // -a is set or video stream is not a video stream
@@ -341,8 +342,8 @@ const
                     break;
                 case vidStr :
                     // log media streams
-                    eventLog =  `video stream codec: ${ vidStr[`codec_long_name`] }\n` +
-                                `save file extension is not configured for the above codec, current media will be discarded 😭.\n`;
+                    eventLog = `video stream codec: ${ vidStr[`codec_long_name`] }\n` +
+                               `save file extension is not configured for the above codec, current media will be discarded 😭.\n`;
                     // output
                     pLog.writeLog(eventLog);
                     // proceed to next media
@@ -354,8 +355,8 @@ const
                     break;
                 case audStr :
                     // log media streams
-                    eventLog =  `audio stream codec: ${ audStr[`codec_long_name`] }\n` +
-                                `save file extension is not configured for the above codec, current media will be discarded 😭.\n`;
+                    eventLog = `audio stream codec: ${ audStr[`codec_long_name`] }\n` +
+                               `save file extension is not configured for the above codec, current media will be discarded 😭.\n`;
                     // output
                     pLog.writeLog(eventLog);
                     // proceed to next media
@@ -367,7 +368,7 @@ const
 
                 // create media
                 successfulProbes
-                    .push(new probedMedia({
+                    .push(new ProbedMedia({
                         referer: vidStr ? vidStr[`_mediaReferer`] : audStr[`_mediaReferer`],
                         duration: vidStr ? vidStr[`_mediaDuration`] : audStr[`_mediaDuration`],
                         audio: audStr,
@@ -386,12 +387,12 @@ const
             }
 
             // log successful probes
-            eventLog =  `---------------------------------\n` +
-                        `SUCCESSFUL PROBES: ${ successfulProbes.length }\n` +
-                        `---------------------------------\n` +
-                        successfulProbes
-                            .map((x, i) => pOut.formatProbe(x, i))
-                            .join(`\n`);
+            eventLog = `---------------------------------\n` +
+                       `SUCCESSFUL PROBES: ${ successfulProbes.length }\n` +
+                       `---------------------------------\n` +
+                       successfulProbes
+                           .map((x, i) => pOut.formatProbe(x, i))
+                           .join(`\n`);
 
             // output
             pLog.writeLog(eventLog);
@@ -425,12 +426,12 @@ const
             pOut.stopAllDownloadBars();
 
             // log successful downloads
-            eventLog =  `---------------------------------\n` +
-                        `${ resultsArray
-                            .map(x => (x[`transcodeSuccessful`] ? x[`savedFile`] : x[`errmsg`]))
-                            .join(`\n`) }\n` +
-                        `---------------------------------\n` +
-                        `downloads completed.\n`;
+            eventLog = `---------------------------------\n` +
+                       `${ resultsArray
+                           .map(x => (x[`transcodeSuccessful`] ? x[`savedFile`] : x[`errmsg`]))
+                           .join(`\n`) }\n` +
+                       `---------------------------------\n` +
+                       `downloads completed.\n`;
 
             // output
             pLog.writeLog(eventLog);
@@ -471,4 +472,4 @@ const
     // ---------------------------------------------------------------------------------
 
 // never rename exports in modules
-export {processFiles};
+export default processFiles;
