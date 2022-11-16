@@ -6,7 +6,5 @@ package-lock.json
 .eslint*
 # exclude logs
 logs
-# exclude debug files
-.vscode
 # exclude test files
 test*
