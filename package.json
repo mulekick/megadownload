@@ -9,7 +9,7 @@
         "cli-progress": "^3.11.2",
         "commander": "^9.4.1",
         "fluent-ffmpeg": "^2.1.2",
-        "node-libcurl": "^2.3.4",
+        "node-libcurl": "^3.0.0",
         "unique-names-generator": "^4.7.1"
     },
     "engines": {
